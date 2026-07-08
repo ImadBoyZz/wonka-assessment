@@ -1,0 +1,36 @@
+{
+  "id": "supernicecompany-support",
+  "name": "SuperNiceCompany Customer Support",
+  "definition": {
+    "system_prompt": "you are an agent for the customer support of SuperNiceCompany Corporation.\n\nyour tasks are the following :\n- generating responses to customer written requests based on generic instructions and historical data about elder human written question/response.\n- if the customer written request can be resolved by any of you available tool, resolve it.",
+    "user_prompt_template": "Generic instructions :\n{{generic_intructions}}\nCustomer mail :\n{{custome_mail}}\nsimilar questions & responses :\n{{similar_questions_responses}}\nanswer :",
+    "tools": [
+      {
+        "signature": "update_customer_budget_billing_plan(new_bbp : float)",
+        "description": "updates the customer budget billing plan and replaces the previous amount by new_bbp in euros"
+      },
+      {
+        "signature": "update_customer_contact_info(email_adress : optional(str), phone_number : optional(str)",
+        "description": "updates customer contact information with the provided email address and/or phone number"
+      }
+    ]
+  },
+  "sampleInputs": {
+    "generic_intructions": "Always answer politely, in the language of the customer, and sign as SuperNiceCompany Corporation Customer Service.\nWhen a customer asks to change their payment plan, offer a new plan in 12 monthly instalments covering the remaining balance due, payable before the 18th of each month. Payments go to account IBAN BE12 3456 7891 0123 with structured reference 123123123123123; the first instalment is due before 18.06.2026.\nWhen a customer asks to update contact details, update them with the available tools and confirm the change in your reply.",
+    "custome_mail": "Hello,\n\nI am not satisfied with the situation regarding my invoices. The amounts do not match what I understood and I am having trouble paying everything as expected.\n\nCould you help me change my payment plan? And please update my email address for invoices: antoine.percy@meetwonka.com\n\nThank you in advance.\n\nBest regards,",
+    "similar_questions_responses": "Q: I would like to spread my outstanding invoices over several months, is that possible?\nA: Yes. We offer payment plans in monthly instalments. The remaining balance is spread evenly and each instalment is payable before the 18th of the month.\n\nQ: Can you send my invoices to a different email address?\nA: Of course. We have updated your contact information; all future invoices will be sent to the new address."
+  },
+  "mockResult": {
+    "toolCalls": [
+      {
+        "toolName": "update_customer_budget_billing_plan",
+        "args": { "new_bbp": 50 }
+      },
+      {
+        "toolName": "update_customer_contact_info",
+        "args": { "email_adress": "antoine.percy@meetwonka.com" }
+      }
+    ],
+    "replyText": "Dear Mr Antoine,\n\nThank you for your message.\n\nIn response to your request regarding your invoices and payment plan, we understand your situation and will help you find a suitable solution. We are offering you a new payment plan in 12 monthly instalments. This plan will include the remaining balance due and will be set at a monthly amount of €50, payable before the 18th of each month. The first instalment must be paid before 18.06.2026 to account IBAN BE12 3456 7891 0123, with the structured reference 123123123123123.\n\nRegarding the update of your email address, your new address antoine.percy@meetwonka.com will be registered for sending your invoices by email.\n\nWe remain at your disposal for any further requests.\n\nHave a nice day.\n\nBest regards,\n\nSuperNiceCompany Corporation Customer Service"
+  }
+}

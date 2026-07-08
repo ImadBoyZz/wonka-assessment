@@ -1,0 +1,48 @@
+{
+  "id": "vinventions-order-agent",
+  "name": "Vinventions Order Processing",
+  "definition": {
+    "system_prompt": "You are an order processing agent for Vinventions, a manufacturer of wine closures.\n\nYour tasks are the following :\n- extract the individual order lines from the purchase order document sent by the customer, applying the client specific instructions and the pricing matrix.\n- register the extracted order data with the available tools.\n- if information required for production is missing (for example artwork for printed closures), flag it with the available tools.\n- write a short order confirmation summary for the sales representative.",
+    "user_prompt_template": "Client specific instructions :\n{{client_custom_prompt}}\nPurchase order document :\n{{po_document_markdown}}\nPricing matrix :\n{{pricing_matrix}}\nsummary :",
+    "tools": [
+      {
+        "signature": "create_order_line(sku : str, quantity : int, unit_price : float)",
+        "description": "creates an order line for the given SKU with the ordered quantity and the unit price in euros"
+      },
+      {
+        "signature": "set_delivery_address(address : str)",
+        "description": "sets the delivery address for the order"
+      },
+      {
+        "signature": "flag_missing_artwork(reason : optional(str))",
+        "description": "flags the order as missing artwork required for production, with an optional reason describing what is missing"
+      }
+    ]
+  },
+  "sampleInputs": {
+    "client_custom_prompt": "Customer of the Nomacorc Green Line range. Items marked as printed require artwork files before production can start. Always register the delivery address stated in the purchase order.",
+    "po_document_markdown": "PURCHASE ORDER PO-2026-0847\nFrom: Chateau Belleval, Route des Vignes 12, 33250 Pauillac, France\nDeliver to: Chateau Belleval warehouse, Zone Industrielle Nord, 33250 Pauillac, France\n\nOrder lines:\n- NOM-GRN-44 - Nomacorc Green 44mm, printed - 250000 units\n- NOM-SEL-47 - Nomacorc Select 47mm, plain - 120000 units\n\nNote: artwork for the printed closures will follow by separate mail.",
+    "pricing_matrix": "NOM-GRN-44: 0.042 EUR/unit up to 500000 units, 0.038 EUR/unit above\nNOM-SEL-47: 0.055 EUR/unit flat"
+  },
+  "mockResult": {
+    "toolCalls": [
+      {
+        "toolName": "create_order_line",
+        "args": { "sku": "NOM-GRN-44", "quantity": 250000, "unit_price": 0.042 }
+      },
+      {
+        "toolName": "create_order_line",
+        "args": { "sku": "NOM-SEL-47", "quantity": 120000, "unit_price": 0.055 }
+      },
+      {
+        "toolName": "set_delivery_address",
+        "args": { "address": "Chateau Belleval warehouse, Zone Industrielle Nord, 33250 Pauillac, France" }
+      },
+      {
+        "toolName": "flag_missing_artwork",
+        "args": { "reason": "Artwork for printed item NOM-GRN-44 announced by separate mail, not yet received" }
+      }
+    ],
+    "replyText": "Order PO-2026-0847 for Chateau Belleval processed.\n\n2 order lines extracted:\n- NOM-GRN-44 (Nomacorc Green 44mm, printed): 250,000 units at €0.042/unit\n- NOM-SEL-47 (Nomacorc Select 47mm, plain): 120,000 units at €0.055/unit\n\nDelivery address registered: Chateau Belleval warehouse, Zone Industrielle Nord, 33250 Pauillac, France.\n\nAttention: the printed item NOM-GRN-44 requires artwork, which the customer announced will follow by separate mail. The order has been flagged until the artwork is received.\n\nTotal order value: €17,100."
+  }
+}
