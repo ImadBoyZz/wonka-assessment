@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",
+    "@phosphor-icons/react": "^2.1.10",
     "next": "16.2.10",
     "openai": "^6.45.0",
     "react": "19.2.4",

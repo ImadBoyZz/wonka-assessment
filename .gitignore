@@ -48,3 +48,6 @@ ANALYSE.md
 
 # local runtime data (uispec cache, audit log, run store)
 /.data/
+
+# local tooling config
+/.claude/
