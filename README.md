@@ -19,7 +19,7 @@ Two hard constraints from the assignment drove the design:
 |---|---|
 | **Necessary** | Generate the UI from the definition (never hardcode per agent) · deterministic extraction of structure (placeholders, tools, parameter types — including `optional(...)`) · tolerate imperfect definitions (the example's typo'd keys and a missing closing parenthesis) · per-action APPROVE/REJECT · **no tool execution before human approval, ever** · editable action parameters before approval (the reference project's "all order fields are editable"), re-validated server-side · empty optional parameters omitted from action cards · full audit trail on every action · API keys server-side only |
 | **Important** | Semantic quality (human labels, panel titles, field roles) via one validated LLM call with a deterministic fallback · provider abstraction with automatic fallback (Anthropic → OpenAI) · UISpec cached per definition · idempotent decisions (a double-click can never execute twice) |
-| **Nice-to-have** | Offline mock provider for demos · run state machine badge (`to_be_validated → confirmed/rejected`) · cache/duration indicator · undeclared-argument flagging on action cards |
+| **Nice-to-have** | Offline mock provider for demos · run state machine badge (`to_be_validated → confirmed/rejected`) · cache/duration indicator · undeclared-argument flagging on action cards · `/playground`: paste any definition and watch the UI generate live (deterministic pipeline in-browser, annotator behind a button) |
 
 ## 3. High-Level Design
 
@@ -149,6 +149,8 @@ Drop one JSON file in `fixtures/` — no code changes anywhere:
 (`sampleInputs` prefills the demo; `mockResult` powers the offline mock provider — both optional.)
 
 It appears in the dropdown, generates its own validation UI, and runs through the same approval flow. The two included fixtures demonstrate this across domains: `supernicecompany.json` (the assignment example, **verbatim, typos included**) and `vinventions-orders.json` (an order-processing agent modeled on the reference project: order-line extraction against a pricing matrix, delivery address, missing-artwork exception).
+
+For an even faster proof, **`/playground`** skips the file entirely: paste or edit a definition and the validation UI generates **live on every keystroke** — possible because the structural half of the pipeline (parser + merger) is pure, deterministic TypeScript that runs in the browser with no LLM involved. The one AI step (the annotator) sits behind an explicit button and reuses the exact server pipeline; nothing in the playground is cached or persisted. The raw UISpec JSON is inspectable next to the rendered preview, making the generation contract itself part of the demo.
 
 ## 6. Assumptions
 

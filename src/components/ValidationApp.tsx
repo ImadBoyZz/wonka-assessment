@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowsClockwise, Lightning, Sparkle } from "@phosphor-icons/react";
+import { ArrowsClockwise, Flask, Lightning, Sparkle } from "@phosphor-icons/react";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import type { ExecutionResult } from "@/lib/executor";
 import type { ProviderPreference } from "@/lib/providers/types";
@@ -244,6 +245,12 @@ export function ValidationApp() {
               )}
             </span>
           )}
+          <Link
+            href="/playground"
+            className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+          >
+            <Flask className="size-3.5" weight="bold" /> playground
+          </Link>
         </div>
         {spec?.annotationSource === "fallback" && spec.annotationError && (
           <p className="mt-2 text-xs text-warn">

@@ -33,6 +33,8 @@ Core idea: **the LLM is a compiler, not a runtime.** Generation (semantic, cache
 3. `src/lib/merger.ts` — deterministic join of AgentSchema ⋈ annotations into the **UISpec**. It iterates the parser's keys only, so the LLM can never add/drop/retype a field; type hints are constrained to the structural type.
 4. `src/components/` — fixed whitelisted registry rendering UISpec JSON (`ValidationApp` orchestrates; `FieldRenderer` maps field types; unknown types render as text input). No eval, no raw HTML; all model output rendered as escaped text.
 
+`/playground` (`src/components/Playground.tsx`) runs the deterministic half (parser + merger, pure TS) live in the browser on an inline definition; the annotator sits behind `POST /api/annotate` (same pipeline as generate, but ephemeral — nothing cached or persisted, definition size capped).
+
 **Phase B — run time** (`POST /api/run` → `src/lib/providers/`):
 
 - The run route renders the prompt template and calls the provider with tool schemas derived from the **same AgentSchema** that generated the UI (single source of truth — UI and tools can't drift).
