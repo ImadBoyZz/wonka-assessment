@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Technical assessment for Wonka AI: a **Human-in-the-Loop validation UI generator**. It takes an agent definition (system prompt + user prompt template + tool signatures in pseudocode) and generates the three-panel review UI (inputs, per-action APPROVE/REJECT cards, generated reply) with no per-agent code. `README.md` is the English deliverable and describes design + rationale in full; `PLAN.md` and `ANALYSE.md` are internal Dutch design docs (plan decisions, assignment analysis).
+Technical assessment for Wonka AI: a **Human-in-the-Loop validation UI generator**. It takes an agent definition (system prompt + user prompt template + tool signatures in pseudocode) and generates the three-panel review UI (inputs, per-action APPROVE/REJECT cards, generated reply) with no per-agent code. `README.md` is the English deliverable and describes design + rationale in full; `PLAN.md`, `ANALYSE.md` and `AUDIT.md` are internal Dutch docs (plan decisions, assignment analysis, audit findings + phased action plan) — gitignored, never part of the submission.
 
 ## Commands
 
@@ -15,7 +15,7 @@ npm run dev        # dev server on :3000
 npm run build      # production build
 npm run lint       # eslint
 npm run typecheck  # tsc --noEmit
-npm test           # vitest run (parser + edit-validation suites)
+npm test           # vitest run (parser + edit-validation + risk-rule suites)
 npx vitest run src/lib/parser.test.ts          # single file
 npx vitest run -t "pattern"                    # single test by name
 ```
@@ -49,7 +49,7 @@ Shared types + Zod schemas live in `src/lib/types.ts`; the `UISpec` is the versi
 
 - **No tool execution before human approval, ever.** The executor's single call site in `api/actions/route.ts` is the gate.
 - Structure comes from the parser, never from the LLM; `mutating` classification and the risk badges (`src/lib/risk.ts`, rules R1–R4, optional `policy.currencyThreshold` per fixture) are derived deterministically, never delegated to the model.
-- Decisions are final and idempotent (409 on replay).
+- Decisions are final and idempotent (409 on replay), and that holds under concurrency: the file store has no transactions, so **every read-modify-write on a run must be serialized through `withLock` (`src/lib/lock.ts`)** — as the actions and reply routes do — and decisions persist write-ahead, before the executor runs.
 - Every run/decision/execution/status change writes an audit entry.
 
 ## Fixtures
