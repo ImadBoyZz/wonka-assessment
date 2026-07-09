@@ -50,6 +50,7 @@ export async function POST(request: Request) {
       replySent: false,
       status: "to_be_validated",
       createdAt: new Date().toISOString(),
+      policy: fixture.policy,
     };
 
     await saveRun(run);

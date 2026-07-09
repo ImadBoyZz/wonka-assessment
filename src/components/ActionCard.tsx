@@ -3,10 +3,11 @@
 import { Check, PencilSimple, ShieldWarning, Warning, X } from "@phosphor-icons/react";
 import { useState } from "react";
 import type { ExecutionResult } from "@/lib/executor";
-import type { NormalizedToolCall, ToolAction } from "@/lib/types";
+import type { NormalizedToolCall, RiskPolicy, ToolAction } from "@/lib/types";
 import { FieldInput, formatArgValue } from "./FieldRenderer";
 import { titleCase } from "@/lib/merger";
 import { isMutatingTool } from "@/lib/parser";
+import { assessRisk, type RiskLevel } from "@/lib/risk";
 
 /* Panel 2 card — one proposed tool call, pending until a human decides.
  *
@@ -21,7 +22,16 @@ import { isMutatingTool } from "@/lib/parser";
  *   the same whitelisted FieldInput registry as the input panel and are
  *   re-validated server-side against the AgentSchema types — this client
  *   only proposes strings. Undeclared arguments stay read-only: there is
- *   no declared type to validate an edit against. */
+ *   no declared type to validate an edit against.
+ * - Every card carries a deterministic risk badge (src/lib/risk.ts, rules
+ *   R1–R4 — never the model's own opinion); HIGH requires an explicit
+ *   second confirmation click before the approve is sent. */
+
+const RISK_STYLE: Record<RiskLevel, string> = {
+  low: "border border-line text-ink-soft",
+  medium: "bg-warn text-white",
+  high: "bg-reject text-white",
+};
 
 function hasValue(v: unknown): boolean {
   return v !== undefined && v !== null && v !== "";
@@ -42,6 +52,7 @@ export function ActionCard({
   decision,
   execution,
   busy,
+  policy,
   onDecide,
 }: {
   action: ToolAction | undefined;
@@ -49,16 +60,19 @@ export function ActionCard({
   decision: "approved" | "rejected" | undefined;
   execution: ExecutionResult | null | undefined;
   busy: boolean;
+  policy?: RiskPolicy;
   onDecide: (decision: "approved" | "rejected", editedArgs?: Record<string, string>) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Record<string, string>>({});
+  const [confirming, setConfirming] = useState(false);
 
   const label = action?.label ?? titleCase(call.toolName);
   // A tool call OUTSIDE the declared schema is the most suspicious case of
   // all — it must never look safer than a declared one, so the mutating
   // classification falls back to the same deterministic heuristic.
   const mutating = action?.mutating ?? isMutatingTool(call.toolName);
+  const risk = assessRisk(call, action, policy);
   // Only declared tools with declared params can be edited (see server-side
   // validation: undeclared → nothing to validate against).
   const canEdit = decision === undefined && (action?.fields.length ?? 0) > 0;
@@ -80,28 +94,48 @@ export function ActionCard({
     setEditing(true);
   }
 
-  function approveEdited() {
+  function changedDraft(): Record<string, string> | undefined {
     // Send only what actually changed — the audit diff stays minimal and an
     // untouched field can never be "re-approved" to a stale value.
     const changed: Record<string, string> = {};
     for (const f of action?.fields ?? []) {
       if ((draft[f.key] ?? "") !== toInputString(call.args[f.key])) changed[f.key] = draft[f.key] ?? "";
     }
-    onDecide("approved", Object.keys(changed).length > 0 ? changed : undefined);
+    return Object.keys(changed).length > 0 ? changed : undefined;
+  }
+
+  /** HIGH-risk approvals need a second, explicit click; the first one only
+   *  arms the confirmation step. Nothing about this lives on the server —
+   *  the server-side gates (409, validation) are unchanged. */
+  function requestApprove() {
+    if (risk.level === "high" && !confirming) {
+      setConfirming(true);
+      return;
+    }
+    setConfirming(false);
+    onDecide("approved", editing ? changedDraft() : undefined);
   }
 
   return (
     <article className="rounded-lg border border-line bg-card p-3">
       <header className="flex items-start justify-between gap-2">
         <h3 className="text-sm font-semibold text-ink">{label}</h3>
-        {mutating && (
+        <div className="flex items-center gap-1.5">
+          {mutating && (
+            <span
+              title="This action changes external state — it only executes after approval"
+              className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-accent-deep"
+            >
+              <ShieldWarning className="size-3" weight="bold" /> mutating
+            </span>
+          )}
           <span
-            title="This action changes external state — it only executes after approval"
-            className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-accent-deep"
+            title={risk.reasons.join("\n")}
+            className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${RISK_STYLE[risk.level]}`}
           >
-            <ShieldWarning className="size-3" weight="bold" /> mutating
+            {risk.level} risk
           </span>
-        )}
+        </div>
       </header>
 
       {editing && decision === undefined ? (
@@ -160,12 +194,36 @@ export function ActionCard({
 
       <footer className="mt-2.5">
         {decision === undefined ? (
-          editing ? (
+          confirming ? (
+            <div className="flex flex-col gap-2 rounded-md border border-reject bg-reject-soft p-2">
+              <p className="text-xs font-medium text-reject">
+                High-risk action — {risk.reasons.join("; ")}. Approve anyway?
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={requestApprove}
+                  className="inline-flex items-center gap-1 rounded-md bg-reject px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white hover:opacity-90 disabled:opacity-50"
+                >
+                  <Check className="size-3.5" weight="bold" /> Confirm approve
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setConfirming(false)}
+                  className="inline-flex items-center gap-1 rounded-md border border-line bg-panel px-3 py-1 text-xs font-semibold uppercase tracking-wide text-ink-soft hover:bg-card disabled:opacity-50"
+                >
+                  <X className="size-3.5" weight="bold" /> Back
+                </button>
+              </div>
+            </div>
+          ) : editing ? (
             <div className="flex gap-2">
               <button
                 type="button"
                 disabled={busy}
-                onClick={approveEdited}
+                onClick={requestApprove}
                 className="inline-flex items-center gap-1 rounded-md bg-approve px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white hover:bg-approve-deep disabled:opacity-50"
               >
                 <Check className="size-3.5" weight="bold" /> Approve edited
@@ -184,7 +242,7 @@ export function ActionCard({
               <button
                 type="button"
                 disabled={busy}
-                onClick={() => onDecide("approved")}
+                onClick={requestApprove}
                 className="inline-flex items-center gap-1 rounded-md bg-approve px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white hover:bg-approve-deep disabled:opacity-50"
               >
                 <Check className="size-3.5" weight="bold" /> Approve

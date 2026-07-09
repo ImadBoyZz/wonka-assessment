@@ -48,7 +48,7 @@ Shared types + Zod schemas live in `src/lib/types.ts`; the `UISpec` is the versi
 ## Invariants (do not break)
 
 - **No tool execution before human approval, ever.** The executor's single call site in `api/actions/route.ts` is the gate.
-- Structure comes from the parser, never from the LLM; `mutating` classification is derived deterministically, never delegated to the model.
+- Structure comes from the parser, never from the LLM; `mutating` classification and the risk badges (`src/lib/risk.ts`, rules R1–R4, optional `policy.currencyThreshold` per fixture) are derived deterministically, never delegated to the model.
 - Decisions are final and idempotent (409 on replay).
 - Every run/decision/execution/status change writes an audit entry.
 

@@ -353,6 +353,7 @@ export function ValidationApp() {
                     decision={run.decisions[call.id]}
                     execution={executions[call.id]}
                     busy={busyAction !== null}
+                    policy={run.policy}
                     onDecide={(d, editedArgs) => decide(call.id, d, editedArgs)}
                   />
                 ))}

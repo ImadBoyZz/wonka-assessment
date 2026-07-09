@@ -35,12 +35,20 @@ export const MockResultSchema = z.object({
 });
 export type MockResult = z.infer<typeof MockResultSchema>;
 
+/** Per-agent thresholds for the deterministic risk rules (src/lib/risk.ts).
+ *  Optional: every rule has a safe default. */
+export const RiskPolicySchema = z.object({
+  currencyThreshold: z.number().positive().optional(),
+});
+export type RiskPolicy = z.infer<typeof RiskPolicySchema>;
+
 export const FixtureSchema = z.object({
   id: z.string(),
   name: z.string(),
   definition: AgentDefinitionSchema,
   sampleInputs: z.record(z.string(), z.string()).default({}),
   mockResult: MockResultSchema.optional(),
+  policy: RiskPolicySchema.optional(),
 });
 export type Fixture = z.infer<typeof FixtureSchema>;
 
@@ -161,6 +169,8 @@ export interface RunRecord {
   replySent: boolean;
   status: RunStatus;
   createdAt: string;
+  /** Snapshot of the fixture's risk policy at run time (deterministic badges). */
+  policy?: RiskPolicy;
 }
 
 export interface AuditEntry {

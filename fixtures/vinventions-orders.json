@@ -19,6 +19,7 @@
       }
     ]
   },
+  "policy": { "currencyThreshold": 1000 },
   "sampleInputs": {
     "client_custom_prompt": "Customer of the Nomacorc Green Line range. Items marked as printed require artwork files before production can start. Always register the delivery address stated in the purchase order.",
     "po_document_markdown": "PURCHASE ORDER PO-2026-0847\nFrom: Chateau Belleval, Route des Vignes 12, 33250 Pauillac, France\nDeliver to: Chateau Belleval warehouse, Zone Industrielle Nord, 33250 Pauillac, France\n\nOrder lines:\n- NOM-GRN-44 - Nomacorc Green 44mm, printed - 250000 units\n- NOM-SEL-47 - Nomacorc Select 47mm, plain - 120000 units\n\nNote: artwork for the printed closures will follow by separate mail.",
