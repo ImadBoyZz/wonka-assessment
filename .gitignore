@@ -46,6 +46,7 @@ PLAN.md
 ANALYSE.md
 AUDIT.md
 *.pdf
+/.scratch/
 
 # local runtime data (uispec cache, audit log, run store)
 /.data/
