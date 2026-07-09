@@ -15,7 +15,7 @@ npm run dev        # dev server on :3000
 npm run build      # production build
 npm run lint       # eslint
 npm run typecheck  # tsc --noEmit
-npm test           # vitest run (parser suite)
+npm test           # vitest run (parser + edit-validation suites)
 npx vitest run src/lib/parser.test.ts          # single file
 npx vitest run -t "pattern"                    # single test by name
 ```
@@ -39,7 +39,7 @@ Core idea: **the LLM is a compiler, not a runtime.** Generation (semantic, cache
 - Provider chain (`providers/index.ts`): `auto` = Anthropic → OpenAI fallback, each failure surfaced as a UI warning. The **mock provider is never a silent fallback** — only an explicit choice.
 - The provider loop is **side-effect-free**: every tool call is intercepted and acknowledged as "queued for human validation" so the model finishes its reply while nothing executes.
 
-**Decisions** (`POST /api/actions`): the executor (`src/lib/executor.ts`, pluggable stub) has exactly **one call site**, runs only on APPROVE, and at most once per action — a repeated decision returns HTTP 409. Every event appends to the audit log (`src/lib/store.ts`).
+**Decisions** (`POST /api/actions`): the executor (`src/lib/executor.ts`, pluggable stub) has exactly **one call site**, runs only on APPROVE, and at most once per action — a repeated decision returns HTTP 409. Before approving, the reviewer may edit an action's declared arguments; edits are re-validated server-side against the parsed parameter types (`src/lib/edits.ts`), persisted write-ahead with the decision, and audited as `action_edited`. Undeclared tools/arguments are never editable. Every event appends to the audit log (`src/lib/store.ts`).
 
 Shared types + Zod schemas live in `src/lib/types.ts`; the `UISpec` is the versioned, language-agnostic contract between generation and rendering.
 

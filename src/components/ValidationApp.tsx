@@ -154,13 +154,17 @@ export function ValidationApp() {
     }
   }
 
-  async function decide(toolCallId: string, decision: "approved" | "rejected") {
+  async function decide(
+    toolCallId: string,
+    decision: "approved" | "rejected",
+    editedArgs?: Record<string, string>
+  ) {
     if (!run || busyAction) return;
     setBusyAction(toolCallId);
     try {
       const data = await postJson<{ run: RunRecord; execution: ExecutionResult | null }>(
         "/api/actions",
-        { runId: run.runId, toolCallId, decision }
+        { runId: run.runId, toolCallId, decision, editedArgs }
       );
       setRun(data.run);
       setExecutions((prev) => ({ ...prev, [toolCallId]: data.execution }));
@@ -342,7 +346,7 @@ export function ValidationApp() {
                     decision={run.decisions[call.id]}
                     execution={executions[call.id]}
                     busy={busyAction !== null}
-                    onDecide={(d) => decide(call.id, d)}
+                    onDecide={(d, editedArgs) => decide(call.id, d, editedArgs)}
                   />
                 ))}
               </div>

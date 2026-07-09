@@ -8,6 +8,7 @@ import type { AuditEntry } from "@/lib/types";
 
 const EVENT_COLOR: Record<AuditEntry["event"], string> = {
   run_created: "bg-accent",
+  action_edited: "bg-warn",
   action_approved: "bg-approve",
   action_rejected: "bg-reject",
   action_executed: "bg-accent-deep",

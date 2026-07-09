@@ -169,6 +169,7 @@ export interface AuditEntry {
   actor: "human" | "system";
   event:
     | "run_created"
+    | "action_edited"
     | "action_approved"
     | "action_rejected"
     | "action_executed"
