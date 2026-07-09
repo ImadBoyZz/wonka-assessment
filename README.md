@@ -187,8 +187,6 @@ For an even faster proof, **`/playground`** skips the file entirely: paste or ed
 
 ![Vinventions validation UI](docs/screenshot-vinventions.png)
 
-Demo video: _link to be added on submission_.
-
 ## 10. Actual time spent
 
 Roughly **4 hours** end to end: ~1.5h analysis and design (assignment + reference document, architecture decisions), ~2h implementation and live testing, ~0.5h documentation. Built AI-assisted (Claude Code); every architectural decision, trade-off and line of this document was reviewed by hand.
