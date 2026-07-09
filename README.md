@@ -177,7 +177,17 @@ For an even faster proof, **`/playground`** skips the file entirely: paste or ed
 - **Queue/batch review** (auto-load next run) — the `1 / 1` counter is honest about the single-run demo scope.
 - Tool-signature grammar covers the assignment's type language plus obvious neighbours; nested/composite types (`list(...)`, objects) currently degrade to a generic field by design and would extend the registry recursively.
 
-## 9. Screenshots
+## 9. Beyond the requirements (optional bonus)
+
+Additional work included because each piece strengthens the core proposal — every item traces back to the assignment or the reference project, none is a free-floating feature:
+
+- **Edit-before-approve on action parameters** — the reference project's *"all order fields are editable"* necessity: the reviewer corrects-and-confirms instead of only vetoing; every edit is re-validated server-side against the parsed types and audited as `action_edited`.
+- **Deterministic risk badges** (low/medium/high, high requiring a second confirmation click) — extends the design line "safety judgments are never delegated to the model" from mutating-classification to risk triage, with the reference case's fraud vectors (amount thresholds, contact/address changes) as rules.
+- **`/playground`** — live proof of *"reusable across different automation domains"*: paste any definition and watch the UI generate on every keystroke, possible only because the structural pipeline is LLM-free.
+- **Per-run trace panel** — the generation span and run span visible in the UI: exactly the Langfuse tracing points from the reference stack, minus the export wiring.
+- **Hardened decision path + test suite** — per-run serialization and write-ahead persistence make the approval gate hold under concurrent requests and crashes; 42 tests cover the parser (against the assignment's verbatim text), edit validation and the risk rules.
+
+## 10. Screenshots
 
 **Assignment example — SuperNiceCompany customer support** (verbatim definition, typos included; offline mock run; note the omitted empty `phone_number`, the € type hint on the billing amount, the deterministic risk badges — the contact change is HIGH and needs a second confirmation click — the **Edit** button on every pending card, and the expanded trace panel with the generation and run spans):
 
@@ -187,6 +197,6 @@ For an even faster proof, **`/playground`** skips the file entirely: paste or ed
 
 ![Vinventions validation UI](docs/screenshot-vinventions.png)
 
-## 10. Actual time spent
+## 11. Actual time spent
 
 Roughly **4 hours** end to end: ~1.5h analysis and design (assignment + reference document, architecture decisions), ~2h implementation and live testing, ~0.5h documentation. Built AI-assisted (Claude Code); every architectural decision, trade-off and line of this document was reviewed by hand.
