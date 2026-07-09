@@ -30,11 +30,13 @@ export async function POST(request: Request) {
   const agentSchema = parseAgentDefinition(fixture.definition);
   const inputs = body.inputs ?? {};
   const provider = body.provider ?? "auto";
+  const renderedUserPrompt = renderUserPrompt(agentSchema.userPromptTemplate, inputs);
 
   try {
+    const started = Date.now();
     const outcome = await runWithFallback(provider, {
       systemPrompt: agentSchema.systemPrompt,
-      userPrompt: renderUserPrompt(agentSchema.userPromptTemplate, inputs),
+      userPrompt: renderedUserPrompt,
       tools: toProviderTools(agentSchema),
       mockResult: provider === "mock" ? fixture.mockResult : undefined,
     });
@@ -51,6 +53,17 @@ export async function POST(request: Request) {
       status: "to_be_validated",
       createdAt: new Date().toISOString(),
       policy: fixture.policy,
+      // The natural tracing point: in production this becomes a Langfuse
+      // span. Prompts and metadata only — never keys.
+      trace: {
+        provider: outcome.providerUsed,
+        model: outcome.result.model,
+        durationMs: Date.now() - started,
+        truncated: outcome.result.truncated ?? false,
+        fallbackPath: outcome.warnings,
+        systemPrompt: agentSchema.systemPrompt,
+        renderedUserPrompt,
+      },
     };
 
     await saveRun(run);

@@ -157,6 +157,22 @@ export interface NormalizedToolCall {
 
 export type RunStatus = "to_be_validated" | "confirmed" | "rejected" | "partially_confirmed";
 
+/** Observability snapshot of one agent run — what a Langfuse span would carry
+ *  in production. Contains prompts and metadata only, never API keys. */
+export interface RunTrace {
+  /** Provider that actually answered (after any fallback). */
+  provider: string;
+  model: string;
+  durationMs: number;
+  /** True when the turn cap cut the loop short. */
+  truncated: boolean;
+  /** Providers that were skipped or failed before one answered. */
+  fallbackPath: string[];
+  systemPrompt: string;
+  /** The user prompt template after placeholder substitution — exactly what the model saw. */
+  renderedUserPrompt: string;
+}
+
 export interface RunRecord {
   runId: string;
   fixtureId: string;
@@ -171,6 +187,7 @@ export interface RunRecord {
   createdAt: string;
   /** Snapshot of the fixture's risk policy at run time (deterministic badges). */
   policy?: RiskPolicy;
+  trace?: RunTrace;
 }
 
 export interface AuditEntry {

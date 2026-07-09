@@ -10,6 +10,7 @@ import { ActionCard } from "./ActionCard";
 import { AuditTrail } from "./AuditTrail";
 import { InputPanel } from "./InputPanel";
 import { OutputPanel } from "./OutputPanel";
+import { TracePanel } from "./TracePanel";
 
 /* Orchestrates the two phases end to end:
  *   generate (definition → UISpec, cached)  →  run (inputs → pending actions)
@@ -378,6 +379,20 @@ export function ValidationApp() {
               )}
             </section>
           </div>
+
+          {spec && (
+            <TracePanel
+              generation={{
+                cacheHit: spec.cache.hit,
+                cacheHash: spec.cache.hash,
+                generationMs: spec.generationMs,
+                annotationSource: spec.annotationSource,
+                annotationModel: spec.annotationModel,
+                annotationError: spec.annotationError,
+              }}
+              trace={run?.trace}
+            />
+          )}
 
           <AuditTrail entries={audit} />
         </>
