@@ -116,6 +116,7 @@ export async function POST(request: Request) {
         actor: "human",
         event: "action_edited",
         detail: describeChanges(toolCall.toolName, editChanges),
+        meta: { toolName: toolCall.toolName, editedKeys: Object.keys(editChanges) },
       });
     }
     await appendAudit({
@@ -123,6 +124,7 @@ export async function POST(request: Request) {
       actor: "human",
       event: decision === "approved" ? "action_approved" : "action_rejected",
       detail: `${toolCall.toolName}(${JSON.stringify(toolCall.args)})`,
+      meta: { toolName: toolCall.toolName },
     });
     if (run.status !== previousStatus) {
       await appendAudit({
@@ -130,6 +132,7 @@ export async function POST(request: Request) {
         actor: "system",
         event: "run_status_changed",
         detail: `${previousStatus} -> ${run.status}`,
+        meta: { from: previousStatus, to: run.status },
       });
     }
 
@@ -142,6 +145,7 @@ export async function POST(request: Request) {
         actor: "system",
         event: "action_executed",
         detail: execution.message,
+        meta: { toolName: toolCall.toolName },
       });
     }
 

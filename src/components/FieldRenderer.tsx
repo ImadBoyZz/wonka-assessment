@@ -40,13 +40,14 @@ export function FieldInput({
   placeholder?: string;
 }) {
   const base =
-    "w-full rounded-md border border-line bg-panel px-3 py-2 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent-soft";
+    "w-full rounded-md border border-line-strong bg-panel px-2.5 py-1.5 text-[13px] text-ink outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent-soft";
 
   switch (type) {
     case "longtext":
       return (
         <textarea
           className={`${base} min-h-32 leading-relaxed`}
+          spellCheck={false}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}

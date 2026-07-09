@@ -72,12 +72,18 @@ export async function POST(request: Request) {
       actor: "system",
       event: "run_created",
       detail: `run created for agent "${fixture.name}" via ${outcome.providerUsed} (${outcome.result.model}); ${run.toolCalls.length} proposed action(s) awaiting validation`,
+      meta: {
+        fixtureId: fixture.id,
+        provider: outcome.providerUsed,
+        model: outcome.result.model,
+        actionCount: run.toolCalls.length,
+      },
     });
 
     const warnings = [...outcome.warnings];
     if (outcome.result.truncated) {
       warnings.push(
-        `Turn cap reached (${MAX_AGENT_TURNS}) — the proposed action list may be incomplete. Review with extra care.`
+        `Turn cap reached (${MAX_AGENT_TURNS}): the proposed action list may be incomplete. Review with extra care.`
       );
     }
 

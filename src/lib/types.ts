@@ -190,6 +190,25 @@ export interface RunRecord {
   trace?: RunTrace;
 }
 
+/** Structured companion to the human-readable `detail` string. The analytics
+ *  dashboard aggregates over these fields — presentation strings are for
+ *  people and are never parsed back into data (the same line the generator
+ *  draws: structure is never recovered from free text). All fields optional:
+ *  entries written before this field existed stay valid. */
+export interface AuditMeta {
+  fixtureId?: string;
+  provider?: string;
+  model?: string;
+  /** run_created: number of proposed tool calls awaiting validation. */
+  actionCount?: number;
+  toolName?: string;
+  /** action_edited: which declared params the human corrected. */
+  editedKeys?: string[];
+  /** run_status_changed: the transition. */
+  from?: RunStatus;
+  to?: RunStatus;
+}
+
 export interface AuditEntry {
   at: string;
   runId: string;
@@ -203,4 +222,5 @@ export interface AuditEntry {
     | "reply_sent"
     | "run_status_changed";
   detail: string;
+  meta?: AuditMeta;
 }

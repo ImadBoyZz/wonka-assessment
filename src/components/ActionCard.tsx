@@ -27,10 +27,12 @@ import { assessRisk, type RiskLevel } from "@/lib/risk";
  *   R1–R4 — never the model's own opinion); HIGH requires an explicit
  *   second confirmation click before the approve is sent. */
 
+/* Risk is the loudest signal on a card: only medium/high carry color,
+ * low stays a quiet outline — color budget goes to what needs attention. */
 const RISK_STYLE: Record<RiskLevel, string> = {
-  low: "border border-line text-ink-soft",
-  medium: "bg-warn text-white",
-  high: "bg-reject text-white",
+  low: "border border-line-strong text-ink-faint",
+  medium: "bg-warn-soft text-warn-deep",
+  high: "bg-reject-soft text-reject-deep",
 };
 
 function hasValue(v: unknown): boolean {
@@ -117,34 +119,39 @@ export function ActionCard({
   }
 
   return (
-    <article className="rounded-lg border border-line bg-card p-3">
+    <article
+      className={`rounded-md border bg-card p-3 transition-colors ${
+        decision === undefined ? "border-line-strong" : "border-line"
+      }`}
+    >
       <header className="flex items-start justify-between gap-2">
-        <h3 className="text-sm font-semibold text-ink">{label}</h3>
-        <div className="flex items-center gap-1.5">
+        <h3 className="text-[13.5px] font-semibold text-ink">{label}</h3>
+        <div className="flex shrink-0 items-center gap-1.5">
           {mutating && (
             <span
-              title="This action changes external state — it only executes after approval"
-              className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-accent-deep"
+              title="This action changes external state; it only executes after approval"
+              className="inline-flex items-center gap-1 rounded border border-line-strong px-1.5 py-px font-mono text-[10.5px] text-ink-soft"
             >
               <ShieldWarning className="size-3" weight="bold" /> mutating
             </span>
           )}
           <span
             title={risk.reasons.join("\n")}
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${RISK_STYLE[risk.level]}`}
+            className={`inline-flex items-center gap-1 rounded px-1.5 py-px font-mono text-[10.5px] font-medium ${RISK_STYLE[risk.level]}`}
           >
+            {risk.level === "high" && <Warning className="size-3" weight="bold" />}
             {risk.level} risk
           </span>
         </div>
       </header>
 
       {editing && decision === undefined ? (
-        <div className="mt-2 flex flex-col gap-2">
+        <div className="mt-2.5 flex flex-col gap-2">
           {(action?.fields ?? []).map((f) => (
-            <label key={f.key} className="flex flex-col gap-1 text-[13px]">
+            <label key={f.key} className="flex flex-col gap-1 text-[12.5px]">
               <span className="text-ink-soft">
                 {f.label}
-                {!f.required && <span className="ml-1 text-[11px] italic">(optional — clear to omit)</span>}
+                {!f.required && <span className="ml-1 text-[11px] italic text-ink-faint">(optional: clear to omit)</span>}
               </span>
               <FieldInput
                 type={f.type}
@@ -154,57 +161,56 @@ export function ActionCard({
             </label>
           ))}
           {extraRows.map((row) => (
-            <div key={row.key} className="flex items-baseline gap-1.5 text-[13px]">
+            <div key={row.key} className="flex items-baseline gap-1.5 text-[12.5px]">
               <span className="text-ink-soft">
                 {row.label}
                 <span
-                  className="ml-1 inline-flex items-center gap-0.5 text-warn"
-                  title="Argument not declared in the tool signature — cannot be edited, only approved or rejected as-is"
+                  className="ml-1 inline-flex items-center gap-0.5 text-warn-deep"
+                  title="Argument not declared in the tool signature; it cannot be edited, only approved or rejected as-is"
                 >
                   <Warning className="inline size-3" weight="bold" /> undeclared, read-only
                 </span>
                 :
               </span>
-              <span className="font-medium text-ink">{row.value}</span>
+              <span className="font-mono text-[12.5px] font-medium text-ink">{row.value}</span>
             </div>
           ))}
         </div>
       ) : (
-        <dl className="mt-1.5 flex flex-col gap-0.5">
+        <dl className="mt-2 flex flex-col gap-1">
           {rows.map((row) => (
-            <div key={row.key} className="flex items-baseline gap-1.5 text-[13px]">
-              <dt className="text-ink-soft">
+            <div key={row.key} className="flex items-baseline gap-2 text-[12.5px]">
+              <dt className="shrink-0 text-ink-soft">
                 {row.label}
                 {!row.known && (
                   <span
-                    className="ml-1 inline-flex items-center gap-0.5 text-warn"
+                    className="ml-1 inline-flex items-center gap-0.5 text-warn-deep"
                     title="Argument not declared in the tool signature"
                   >
                     <Warning className="inline size-3" weight="bold" /> undeclared
                   </span>
                 )}
-                :
               </dt>
-              <dd className="font-medium text-ink">{row.value}</dd>
+              <dd className="min-w-0 break-words font-mono font-medium text-ink">{row.value}</dd>
             </div>
           ))}
-          {rows.length === 0 && <p className="text-[13px] italic text-ink-soft">No arguments provided.</p>}
+          {rows.length === 0 && <p className="text-[12.5px] italic text-ink-faint">No arguments provided.</p>}
         </dl>
       )}
 
-      <footer className="mt-2.5">
+      <footer className="mt-3">
         {decision === undefined ? (
           confirming ? (
-            <div className="flex flex-col gap-2 rounded-md border border-reject bg-reject-soft p-2">
-              <p className="text-xs font-medium text-reject">
-                High-risk action — {risk.reasons.join("; ")}. Approve anyway?
+            <div className="flex flex-col gap-2 rounded-md border border-reject/40 bg-reject-soft p-2.5">
+              <p className="text-[12px] font-medium leading-relaxed text-reject-deep">
+                High-risk action ({risk.reasons.join("; ")}). Approve anyway?
               </p>
               <div className="flex gap-2">
                 <button
                   type="button"
                   disabled={busy}
                   onClick={requestApprove}
-                  className="inline-flex items-center gap-1 rounded-md bg-reject px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white hover:opacity-90 disabled:opacity-50"
+                  className="inline-flex h-7 items-center gap-1 rounded-md bg-approve px-2.5 text-[12px] font-semibold text-panel transition-colors hover:bg-approve-deep disabled:opacity-50"
                 >
                   <Check className="size-3.5" weight="bold" /> Confirm approve
                 </button>
@@ -212,30 +218,11 @@ export function ActionCard({
                   type="button"
                   disabled={busy}
                   onClick={() => setConfirming(false)}
-                  className="inline-flex items-center gap-1 rounded-md border border-line bg-panel px-3 py-1 text-xs font-semibold uppercase tracking-wide text-ink-soft hover:bg-card disabled:opacity-50"
+                  className="inline-flex h-7 items-center gap-1 rounded-md border border-line-strong bg-panel px-2.5 text-[12px] font-semibold text-ink-soft transition-colors hover:text-ink disabled:opacity-50"
                 >
                   <X className="size-3.5" weight="bold" /> Back
                 </button>
               </div>
-            </div>
-          ) : editing ? (
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={busy}
-                onClick={requestApprove}
-                className="inline-flex items-center gap-1 rounded-md bg-approve px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white hover:bg-approve-deep disabled:opacity-50"
-              >
-                <Check className="size-3.5" weight="bold" /> Approve edited
-              </button>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => setEditing(false)}
-                className="inline-flex items-center gap-1 rounded-md border border-line bg-panel px-3 py-1 text-xs font-semibold uppercase tracking-wide text-ink-soft hover:bg-card disabled:opacity-50"
-              >
-                <X className="size-3.5" weight="bold" /> Cancel
-              </button>
             </div>
           ) : (
             <div className="flex gap-2">
@@ -243,35 +230,48 @@ export function ActionCard({
                 type="button"
                 disabled={busy}
                 onClick={requestApprove}
-                className="inline-flex items-center gap-1 rounded-md bg-approve px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white hover:bg-approve-deep disabled:opacity-50"
+                className="inline-flex h-8 items-center gap-1.5 rounded-md bg-approve px-3 text-[12.5px] font-semibold text-panel transition-colors hover:bg-approve-deep disabled:opacity-50"
               >
-                <Check className="size-3.5" weight="bold" /> Approve
+                <Check className="size-3.5" weight="bold" /> {editing ? "Approve edited" : "Approve"}
               </button>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => onDecide("rejected")}
-                className="inline-flex items-center gap-1 rounded-md border border-reject bg-panel px-3 py-1 text-xs font-semibold uppercase tracking-wide text-reject hover:bg-reject-soft disabled:opacity-50"
-              >
-                <X className="size-3.5" weight="bold" /> Reject
-              </button>
-              {canEdit && (
+              {editing ? (
                 <button
                   type="button"
                   disabled={busy}
-                  onClick={startEditing}
-                  className="inline-flex items-center gap-1 rounded-md border border-line bg-panel px-3 py-1 text-xs font-semibold uppercase tracking-wide text-ink-soft hover:bg-card disabled:opacity-50"
+                  onClick={() => setEditing(false)}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-md border border-line-strong bg-panel px-3 text-[12.5px] font-semibold text-ink-soft transition-colors hover:text-ink disabled:opacity-50"
                 >
-                  <PencilSimple className="size-3.5" weight="bold" /> Edit
+                  <X className="size-3.5" weight="bold" /> Cancel
                 </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => onDecide("rejected")}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-reject/50 bg-panel px-3 text-[12.5px] font-semibold text-reject transition-colors hover:bg-reject-soft disabled:opacity-50"
+                  >
+                    <X className="size-3.5" weight="bold" /> Reject
+                  </button>
+                  {canEdit && (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={startEditing}
+                      className="inline-flex h-8 items-center gap-1.5 rounded-md border border-line-strong bg-panel px-3 text-[12.5px] font-semibold text-ink-soft transition-colors hover:text-ink disabled:opacity-50"
+                    >
+                      <PencilSimple className="size-3.5" weight="bold" /> Edit
+                    </button>
+                  )}
+                </>
               )}
             </div>
           )
         ) : (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1.5">
             <span
-              className={`inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                decision === "approved" ? "bg-approve text-white" : "bg-reject text-white"
+              className={`inline-flex w-fit items-center gap-1 rounded px-1.5 py-px font-mono text-[11px] font-medium ${
+                decision === "approved" ? "bg-approve-soft text-approve-deep" : "bg-reject-soft text-reject-deep"
               }`}
             >
               {decision === "approved" ? (
@@ -282,7 +282,7 @@ export function ActionCard({
               {decision}
             </span>
             {execution && (
-              <code className="block truncate rounded bg-panel px-2 py-1 font-mono text-[11px] text-ink-soft" title={execution.message}>
+              <code className="block truncate font-mono text-[11px] text-ink-faint" title={execution.message}>
                 {execution.message}
               </code>
             )}

@@ -11,11 +11,12 @@ Technical assessment for Wonka AI: a **Human-in-the-Loop validation UI generator
 ## Commands
 
 ```bash
-npm run dev        # dev server on :3000
+npm run dev        # dev server on :3001
 npm run build      # production build
 npm run lint       # eslint
 npm run typecheck  # tsc --noEmit
-npm test           # vitest run (parser + edit-validation + risk-rule suites)
+npm test           # vitest run (parser + edit-validation + risk-rule + analytics suites)
+npm run seed       # demo review history into .data/ so /dashboard isn't empty
 npx vitest run src/lib/parser.test.ts          # single file
 npx vitest run -t "pattern"                    # single test by name
 ```
@@ -41,7 +42,11 @@ Core idea: **the LLM is a compiler, not a runtime.** Generation (semantic, cache
 - Provider chain (`providers/index.ts`): `auto` = Anthropic → OpenAI fallback, each failure surfaced as a UI warning. The **mock provider is never a silent fallback** — only an explicit choice.
 - The provider loop is **side-effect-free**: every tool call is intercepted and acknowledged as "queued for human validation" so the model finishes its reply while nothing executes.
 
-**Decisions** (`POST /api/actions`): the executor (`src/lib/executor.ts`, pluggable stub) has exactly **one call site**, runs only on APPROVE, and at most once per action — a repeated decision returns HTTP 409. Before approving, the reviewer may edit an action's declared arguments; edits are re-validated server-side against the parsed parameter types (`src/lib/edits.ts`), persisted write-ahead with the decision, and audited as `action_edited`. Undeclared tools/arguments are never editable. Every event appends to the audit log (`src/lib/store.ts`).
+**Decisions** (`POST /api/actions`): the executor (`src/lib/executor.ts`, pluggable stub) has exactly **one call site**, runs only on APPROVE, and at most once per action — a repeated decision returns HTTP 409. Before approving, the reviewer may edit an action's declared arguments; edits are re-validated server-side against the parsed parameter types (`src/lib/edits.ts`), persisted write-ahead with the decision, and audited as `action_edited`. Undeclared tools/arguments are never editable. Every event appends to the audit log (`src/lib/store.ts`) with a structured `meta` field next to the human-readable detail string.
+
+**Analytics** (`/dashboard`, server component, `force-dynamic`): read-only fold over `audit.jsonl` via `src/lib/analytics.ts` — KPIs per run status, approval/reject rate per tool, edit rate per field, median run→decision time. Aggregation reads the structured `meta` fields, never re-parses detail strings (narrow fallbacks exist for pre-`meta` entries). `scripts/seed-demo.mjs` (`npm run seed`) writes a `demo-`prefixed mock history through the store formats. The dashboard never touches runs, decisions or the executor.
+
+**Design system** (`src/app/globals.css` + `src/app/layout.tsx`): OKLCH "paper instrument" tokens — warm paper surfaces, cool ink text, IBM Plex Sans/Mono. The only saturated colors are decision semantics (approve green, reject red, warn amber; quiet steel-blue accent reserved for focus/links/pending; `--chart-pending` is the chart-only higher-chroma variant). Raw machine payloads (prompts, UISpec JSON) render on dark `bg-ink` "machine glass" `<pre>` blocks. No em dashes in visible UI copy.
 
 Shared types + Zod schemas live in `src/lib/types.ts`; the `UISpec` is the versioned, language-agnostic contract between generation and rendering.
 

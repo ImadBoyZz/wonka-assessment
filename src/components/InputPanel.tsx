@@ -5,11 +5,12 @@ import { useState } from "react";
 import type { Field, UISpec } from "@/lib/types";
 import { FieldInput, FieldTypeIcon } from "./FieldRenderer";
 
-/* Panel 1 — "Informations". Primary fields (the per-run input a reviewer
+/* Panel 1 — the run inputs. Primary fields (the per-run input a reviewer
  * must see) are expanded; context/retrieved fields are collapsed by default,
  * mirroring the example UI where only the customer mail is visible while
  * generic instructions and similar Q&A stay out of view — but every field
- * remains reachable and editable. */
+ * remains reachable and editable. Being open IS the emphasis: primary
+ * fields need no extra color. */
 
 const ROLE_HINT: Record<string, string> = {
   context: "static context",
@@ -29,25 +30,29 @@ function FieldSection({
   const [open, setOpen] = useState(isPrimary);
 
   return (
-    <section className="overflow-hidden rounded-lg border border-line">
+    <section className="overflow-hidden rounded-md border border-line">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium ${
-          isPrimary ? "bg-accent-soft text-accent-deep" : "bg-card text-ink-soft"
+        className={`flex w-full items-center gap-2 px-2.5 py-2 text-left text-[13px] transition-colors hover:bg-panel-2 ${
+          isPrimary ? "font-medium text-ink" : "text-ink-soft"
         }`}
       >
-        <FieldTypeIcon type={field.type} />
+        <FieldTypeIcon type={field.type} className="size-3.5 shrink-0 text-ink-faint" />
         <span className="flex-1">{field.label}</span>
         {!isPrimary && field.role && (
-          <span className="rounded-full border border-line bg-panel px-2 py-0.5 text-[10px] uppercase tracking-wide text-ink-soft">
+          <span className="rounded border border-line-strong px-1.5 py-px font-mono text-[10.5px] text-ink-faint">
             {ROLE_HINT[field.role] ?? field.role}
           </span>
         )}
-        {open ? <CaretUp className="size-4" /> : <CaretDown className="size-4" />}
+        {open ? (
+          <CaretUp className="size-3.5 shrink-0 text-ink-faint" />
+        ) : (
+          <CaretDown className="size-3.5 shrink-0 text-ink-faint" />
+        )}
       </button>
       {open && (
-        <div className="bg-panel p-3">
+        <div className="border-t border-line p-2.5">
           <FieldInput
             type={field.type}
             value={value}
@@ -70,9 +75,9 @@ export function InputPanel({
   onInputChange: (key: string, value: string) => void;
 }) {
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-2">
       {spec.inputPanel.fields.length === 0 && (
-        <p className="text-sm text-ink-soft">This agent takes no per-run inputs.</p>
+        <p className="text-[13px] text-ink-soft">This agent takes no per-run inputs.</p>
       )}
       {spec.inputPanel.fields.map((field) => (
         <FieldSection

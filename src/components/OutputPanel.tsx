@@ -6,7 +6,8 @@ import type { UISpec } from "@/lib/types";
 
 /* Panel 3 — the free-text output ("Suggested Reply" for the example agent).
  * Sending is a human action too: it goes through the API and lands in the
- * audit trail. Nothing is sent automatically. */
+ * audit trail. Nothing is sent automatically. Send is semantically an
+ * approval of the reply, so it wears approve green. */
 
 export function OutputPanel({
   spec,
@@ -35,16 +36,16 @@ export function OutputPanel({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <p className="text-xs font-medium text-accent">{spec.outputPanel.description}</p>
-      <div className="mt-2 flex-1 whitespace-pre-wrap text-[13px] leading-relaxed text-ink">
-        {replyText || <span className="italic text-ink-soft">No text output was generated.</span>}
+      <p className="font-mono text-[11px] text-ink-faint">{spec.outputPanel.description}</p>
+      <div className="mt-2.5 flex-1 whitespace-pre-wrap text-[13.5px] leading-[1.65] text-ink">
+        {replyText || <span className="italic text-ink-faint">No text output was generated.</span>}
       </div>
       {replyText && (
         <div className="mt-3 flex items-center gap-2 border-t border-line pt-3">
           <button
             type="button"
             onClick={copy}
-            className="inline-flex items-center gap-1 rounded-md border border-line bg-panel px-3 py-1 text-xs font-medium text-ink-soft hover:border-accent hover:text-accent-deep"
+            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-line-strong bg-panel px-3 text-[12.5px] font-semibold text-ink-soft transition-colors hover:text-ink"
           >
             {copied ? <Check className="size-3.5" weight="bold" /> : <Copy className="size-3.5" />}
             {copied ? "Copied" : "Copy"}
@@ -53,7 +54,7 @@ export function OutputPanel({
             type="button"
             disabled={replySent || busy}
             onClick={onSend}
-            className="inline-flex items-center gap-1 rounded-md bg-accent px-3 py-1 text-xs font-semibold text-white hover:bg-accent-deep disabled:opacity-50"
+            className="inline-flex h-8 items-center gap-1.5 rounded-md bg-approve px-3 text-[12.5px] font-semibold text-panel transition-colors hover:bg-approve-deep disabled:opacity-50"
           >
             <PaperPlaneTilt className="size-3.5" weight="bold" />
             {replySent ? "Sent (mock)" : "Send reply"}

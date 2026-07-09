@@ -24,6 +24,7 @@ export async function POST(request: Request) {
       return Response.json({ error: "Reply already sent", run }, { status: 409 });
     }
 
+    const previousStatus = run.status;
     run.replySent = true;
     if (run.toolCalls.length === 0 && run.status === "to_be_validated") {
       // No tool calls: the reply itself is the validation object.
@@ -36,7 +37,18 @@ export async function POST(request: Request) {
       actor: "human",
       event: "reply_sent",
       detail: "suggested reply approved and sent (mock)",
+      meta: { fixtureId: run.fixtureId },
     });
+    if (run.status !== previousStatus) {
+      // Same invariant as the actions route: every status change is audited.
+      await appendAudit({
+        runId: run.runId,
+        actor: "system",
+        event: "run_status_changed",
+        detail: `${previousStatus} -> ${run.status}`,
+        meta: { from: previousStatus, to: run.status },
+      });
+    }
 
     return Response.json({ run });
   });
