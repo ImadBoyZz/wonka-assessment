@@ -179,6 +179,47 @@ export function parseAgentDefinition(def: AgentDefinition): AgentSchema {
   };
 }
 
+/* ----------------------- parser diagnostics ------------------------ */
+/* The parser never throws, but silent degradation is its own failure   */
+/* mode: a placeholder key or tool name outside the supported grammar   */
+/* (e.g. accented identifiers — "{{données_client}}", "créer_ligne")    */
+/* would produce a UI that LOOKS complete while missing an input or     */
+/* mangling a tool name. These checks make that degradation visible.    */
+
+const LOOSE_PLACEHOLDER_RE = /\{\{([^{}]*)\}\}/g;
+const IDENT_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+export function collectParserWarnings(def: AgentDefinition, schema: AgentSchema): string[] {
+  const warnings: string[] = [];
+
+  const parsedKeys = new Set(schema.placeholders.map((p) => p.key));
+  const reported = new Set<string>();
+  for (const m of def.user_prompt_template.matchAll(LOOSE_PLACEHOLDER_RE)) {
+    const key = m[1].trim();
+    if (parsedKeys.has(key) || reported.has(key)) continue;
+    reported.add(key);
+    warnings.push(
+      `Placeholder {{${key}}} is outside the supported key syntax (letters, digits, underscore) — ` +
+        `no input field was generated and it will reach the model as literal text.`
+    );
+  }
+
+  def.tools.forEach((tool, i) => {
+    const raw = tool.signature.trim();
+    const open = raw.indexOf("(");
+    const namePart = (open === -1 ? raw : raw.slice(0, open)).trim().replace(/^\d+[.)]?\s*/, "");
+    const parsedName = schema.tools[i]?.name;
+    if (parsedName && namePart.length > 0 && !IDENT_RE.test(namePart) && namePart !== parsedName) {
+      warnings.push(
+        `Tool name "${namePart}" contains unsupported characters — it was parsed as "${parsedName}", ` +
+          `which will not match what the model calls it.`
+      );
+    }
+  });
+
+  return warnings;
+}
+
 /* ------------------- derived views of the schema ------------------- */
 /* The same AgentSchema feeds both the UI generation and the runtime   */
 /* provider call — one source of truth, so the UI can never disagree   */

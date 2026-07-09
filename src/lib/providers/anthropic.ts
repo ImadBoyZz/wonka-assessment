@@ -30,6 +30,7 @@ export const anthropicProvider: AgentProvider = {
     const toolCalls: NormalizedToolCall[] = [];
     let replyText = "";
     let model = MODEL;
+    let truncated = false;
 
     for (let turn = 0; turn < MAX_AGENT_TURNS; turn++) {
       const response = await client.messages.create({
@@ -62,6 +63,10 @@ export const anthropicProvider: AgentProvider = {
       if (turnText) replyText = turnText;
 
       if (response.stop_reason !== "tool_use" || turnToolUses.length === 0) break;
+      if (turn === MAX_AGENT_TURNS - 1) {
+        truncated = true; // cap reached while the model still wanted tools
+        break;
+      }
 
       messages.push({ role: "assistant", content: response.content });
       messages.push({
@@ -74,6 +79,6 @@ export const anthropicProvider: AgentProvider = {
       });
     }
 
-    return { toolCalls, replyText, model };
+    return { toolCalls, replyText, model, truncated };
   },
 };

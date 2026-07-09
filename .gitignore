@@ -44,6 +44,7 @@ next-env.d.ts
 # internal planning docs + confidential source material (never part of the submission)
 PLAN.md
 ANALYSE.md
+AUDIT.md
 *.pdf
 
 # local runtime data (uispec cache, audit log, run store)

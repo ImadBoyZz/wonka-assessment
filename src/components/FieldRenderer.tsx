@@ -99,7 +99,9 @@ export function FieldInput({
 /** Human-readable rendering of a tool-call argument value. */
 export function formatArgValue(type: FieldType, value: unknown): string {
   if (type === "currency") return `€ ${String(value)}`;
-  if (type === "boolean") return value ? "yes" : "no";
+  // Strict check: the string "false" is truthy — rendering it as "yes" would
+  // make a reviewer approve the opposite of what the model asked.
+  if (type === "boolean") return value === true || value === "true" ? "yes" : "no";
   if (typeof value === "object" && value !== null) return JSON.stringify(value);
   return String(value);
 }

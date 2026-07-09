@@ -1,7 +1,7 @@
 import { annotate } from "@/lib/annotator";
 import { getFixture } from "@/lib/fixtures";
 import { mergeToUISpec } from "@/lib/merger";
-import { parseAgentDefinition } from "@/lib/parser";
+import { collectParserWarnings, parseAgentDefinition } from "@/lib/parser";
 import { definitionHash, readCachedSpec, writeCachedSpec, type CachedSpec } from "@/lib/store";
 
 /* FASE A — generation time. definition → parse (deterministic) →
@@ -43,6 +43,7 @@ export async function POST(request: Request) {
     annotationSource: annotation.source,
     annotationModel: annotation.model,
     annotationError: annotation.error,
+    parserWarnings: collectParserWarnings(fixture.definition, agentSchema),
     generatedAt: new Date().toISOString(),
     generationMs: Date.now() - started,
   };

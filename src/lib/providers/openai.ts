@@ -34,6 +34,7 @@ export const openaiProvider: AgentProvider = {
     const toolCalls: NormalizedToolCall[] = [];
     let replyText = "";
     let model = MODEL;
+    let truncated = false;
 
     for (let turn = 0; turn < MAX_AGENT_TURNS; turn++) {
       const response = await client.chat.completions.create({
@@ -61,6 +62,10 @@ export const openaiProvider: AgentProvider = {
       if (message.content?.trim()) replyText = message.content.trim();
 
       if (turnCalls.length === 0) break;
+      if (turn === MAX_AGENT_TURNS - 1) {
+        truncated = true; // cap reached while the model still wanted tools
+        break;
+      }
 
       messages.push(message);
       for (const call of turnCalls) {
@@ -68,6 +73,6 @@ export const openaiProvider: AgentProvider = {
       }
     }
 
-    return { toolCalls, replyText, model };
+    return { toolCalls, replyText, model, truncated };
   },
 };

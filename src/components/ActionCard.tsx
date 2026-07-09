@@ -5,6 +5,7 @@ import type { ExecutionResult } from "@/lib/executor";
 import type { NormalizedToolCall, ToolAction } from "@/lib/types";
 import { formatArgValue } from "./FieldRenderer";
 import { titleCase } from "@/lib/merger";
+import { isMutatingTool } from "@/lib/parser";
 
 /* Panel 2 card — one proposed tool call, pending until a human decides.
  *
@@ -35,6 +36,10 @@ export function ActionCard({
   onDecide: (decision: "approved" | "rejected") => void;
 }) {
   const label = action?.label ?? titleCase(call.toolName);
+  // A tool call OUTSIDE the declared schema is the most suspicious case of
+  // all — it must never look safer than a declared one, so the mutating
+  // classification falls back to the same deterministic heuristic.
+  const mutating = action?.mutating ?? isMutatingTool(call.toolName);
 
   // Schema-ordered known params first, then any unrecognized extras.
   const knownRows = (action?.fields ?? [])
@@ -50,7 +55,7 @@ export function ActionCard({
     <article className="rounded-lg border border-line bg-card p-3">
       <header className="flex items-start justify-between gap-2">
         <h3 className="text-sm font-semibold text-ink">{label}</h3>
-        {action?.mutating && (
+        {mutating && (
           <span
             title="This action changes external state — it only executes after approval"
             className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-accent-deep"

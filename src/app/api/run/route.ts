@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { getFixture } from "@/lib/fixtures";
 import { parseAgentDefinition, renderUserPrompt, toProviderTools } from "@/lib/parser";
 import { runWithFallback, type ProviderPreference } from "@/lib/providers";
+import { MAX_AGENT_TURNS } from "@/lib/providers/shared";
 import { appendAudit, saveRun } from "@/lib/store";
 import type { RunRecord } from "@/lib/types";
 
@@ -59,7 +60,14 @@ export async function POST(request: Request) {
       detail: `run created for agent "${fixture.name}" via ${outcome.providerUsed} (${outcome.result.model}); ${run.toolCalls.length} proposed action(s) awaiting validation`,
     });
 
-    return Response.json({ run, warnings: outcome.warnings });
+    const warnings = [...outcome.warnings];
+    if (outcome.result.truncated) {
+      warnings.push(
+        `Turn cap reached (${MAX_AGENT_TURNS}) — the proposed action list may be incomplete. Review with extra care.`
+      );
+    }
+
+    return Response.json({ run, warnings });
   } catch (err) {
     return Response.json(
       { error: err instanceof Error ? err.message : "Agent run failed" },

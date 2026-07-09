@@ -23,6 +23,10 @@ export interface AgentRunResult {
   toolCalls: NormalizedToolCall[];
   replyText: string;
   model: string;
+  /** True when the loop hit MAX_AGENT_TURNS while the model still wanted to
+   *  call tools — the action list may be incomplete and the reviewer must
+   *  be warned, never left to assume it is the whole set. */
+  truncated?: boolean;
 }
 
 export interface AgentProvider {

@@ -28,6 +28,10 @@ export interface CachedSpec {
   annotationSource: "llm" | "fallback";
   annotationModel?: string;
   annotationError?: string;
+  /** Structural degradations the parser recovered from (unsupported
+   *  placeholder syntax, mangled tool names) — shown to the user so a
+   *  UI that silently misses a field can never look complete. */
+  parserWarnings?: string[];
   generatedAt: string;
   generationMs: number;
 }

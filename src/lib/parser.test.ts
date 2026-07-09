@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  collectParserWarnings,
   isMutatingTool,
   parseAgentDefinition,
   parsePlaceholders,
@@ -135,6 +136,55 @@ describe("parseAgentDefinition + derived views", () => {
 
   it("leaves unknown placeholder inputs empty instead of leaking the slot syntax", () => {
     expect(renderUserPrompt("x {{missing}} y", {})).toBe("x  y");
+  });
+});
+
+describe("collectParserWarnings (silent degradation made visible)", () => {
+  it("reports zero warnings for the verbatim assignment definition", () => {
+    const def = {
+      system_prompt: SYSTEM_PROMPT,
+      user_prompt_template: TEMPLATE,
+      tools: [
+        { signature: TOOL_1, description: "" },
+        { signature: TOOL_2_VERBATIM, description: "" },
+      ],
+    };
+    expect(collectParserWarnings(def, parseAgentDefinition(def))).toEqual([]);
+  });
+
+  it("warns when a placeholder key is outside the supported syntax (accents)", () => {
+    const def = {
+      system_prompt: "",
+      user_prompt_template: "Client :\n{{données_client}}\nanswer :",
+      tools: [],
+    };
+    const schema = parseAgentDefinition(def);
+    expect(schema.placeholders).toHaveLength(0); // silently dropped by the strict grammar…
+    const warnings = collectParserWarnings(def, schema);
+    expect(warnings).toHaveLength(1); // …but never silently for the user
+    expect(warnings[0]).toContain("données_client");
+  });
+
+  it("warns when a tool name contains unsupported characters", () => {
+    const def = {
+      system_prompt: "",
+      user_prompt_template: "{{input}}",
+      tools: [{ signature: "créer_ligne(prix : float)", description: "" }],
+    };
+    const schema = parseAgentDefinition(def);
+    const warnings = collectParserWarnings(def, schema);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("créer_ligne");
+    expect(warnings[0]).toContain(`"${schema.tools[0].name}"`);
+  });
+
+  it("dedupes repeated unsupported placeholders", () => {
+    const def = {
+      system_prompt: "",
+      user_prompt_template: "{{bad-key}} en nog eens {{bad-key}}",
+      tools: [],
+    };
+    expect(collectParserWarnings(def, parseAgentDefinition(def))).toHaveLength(1);
   });
 });
 

@@ -28,6 +28,7 @@ interface GenerateResponse {
   annotationSource: "llm" | "fallback";
   annotationModel?: string;
   annotationError?: string;
+  parserWarnings?: string[];
   generationMs: number;
   cache: { hit: boolean; hash: string };
 }
@@ -39,14 +40,25 @@ const STATUS_STYLE: Record<RunStatus, string> = {
   partially_confirmed: "bg-warn text-white",
 };
 
+/** Error that carries the response body: a 409 includes the server's current
+ *  run state, which the UI adopts instead of going stale. */
+class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly payload: { run?: RunRecord }
+  ) {
+    super(message);
+  }
+}
+
 async function postJson<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  const data = (await res.json()) as T & { error?: string };
-  if (!res.ok) throw new Error(data.error ?? `${url} failed (${res.status})`);
+  const data = (await res.json()) as T & { error?: string; run?: RunRecord };
+  if (!res.ok) throw new ApiError(data.error ?? `${url} failed (${res.status})`, data);
   return data;
 }
 
@@ -154,6 +166,10 @@ export function ValidationApp() {
       setExecutions((prev) => ({ ...prev, [toolCallId]: data.execution }));
       await refreshAudit(run.runId);
     } catch (err) {
+      if (err instanceof ApiError && err.payload.run) {
+        setRun(err.payload.run); // 409: adopt the server's authoritative state
+        await refreshAudit(run.runId);
+      }
       setError(err instanceof Error ? err.message : "Decision failed");
     } finally {
       setBusyAction(null);
@@ -168,6 +184,10 @@ export function ValidationApp() {
       setRun(data.run);
       await refreshAudit(run.runId);
     } catch (err) {
+      if (err instanceof ApiError && err.payload.run) {
+        setRun(err.payload.run); // 409: adopt the server's authoritative state
+        await refreshAudit(run.runId);
+      }
       setError(err instanceof Error ? err.message : "Send failed");
     } finally {
       setBusyAction(null);
@@ -226,6 +246,11 @@ export function ValidationApp() {
             Annotator unavailable ({spec.annotationError}) — using deterministic labels.
           </p>
         )}
+        {spec?.parserWarnings?.map((w, i) => (
+          <p key={i} className="mt-2 text-xs text-warn">
+            ⚠ {w}
+          </p>
+        ))}
       </header>
 
       {error && (
@@ -273,14 +298,13 @@ export function ValidationApp() {
                 <ArrowsClockwise className={`size-4 ${running ? "animate-spin" : ""}`} weight="bold" />
                 {running ? "Running…" : run ? "Run again" : "Run agent"}
               </button>
-              {run && <span className="font-mono text-xs text-ink-soft">1 / 1</span>}
             </div>
           </div>
 
           {warnings.length > 0 && (
             <div className="rounded-lg border border-line bg-panel px-4 py-2 text-xs text-warn">
               {warnings.map((w, i) => (
-                <p key={i}>fallback: {w}</p>
+                <p key={i}>⚠ {w}</p>
               ))}
             </div>
           )}
