@@ -148,7 +148,7 @@ Drop one JSON file in `fixtures/` — no code changes anywhere:
 
 (`sampleInputs` prefills the demo; `mockResult` powers the offline mock provider — both optional.)
 
-It appears in the dropdown, generates its own validation UI, and runs through the same approval flow. The two included fixtures demonstrate this across domains: `supernicecompany.json` (the assignment example, **verbatim, typos included**) and `vinventions-orders.json` (an order-processing agent modeled on the reference project: order-line extraction against a pricing matrix, delivery address, missing-artwork exception).
+It appears in the dropdown, generates its own validation UI, and runs through the same approval flow. The two included fixtures demonstrate this across domains: `supernicecompany.json` (the assignment example, **verbatim, typos included**) and `vinventions-orders.json` (an order-processing agent modeled on the reference project: order-line extraction against a pricing matrix with packaging type, auxiliary lines for pallets/freight/rebates, delivery address, missing-artwork exception). The Vinventions fixture deliberately demonstrates only the **order-extraction and validation slice** of that case; the client-identification mode, artwork identification, quick actions and auto-load-next queueing are out of scope for this prototype (queueing is also listed under known limitations).
 
 For an even faster proof, **`/playground`** skips the file entirely: paste or edit a definition and the validation UI generates **live on every keystroke** — possible because the structural half of the pipeline (parser + merger) is pure, deterministic TypeScript that runs in the browser with no LLM involved. The one AI step (the annotator) sits behind an explicit button and reuses the exact server pipeline; nothing in the playground is cached or persisted. The raw UISpec JSON is inspectable next to the rendered preview, making the generation contract itself part of the demo.
 
@@ -179,11 +179,11 @@ For an even faster proof, **`/playground`** skips the file entirely: paste or ed
 
 ## 9. Screenshots
 
-**Assignment example — SuperNiceCompany customer support** (verbatim definition, typos included; live run via `claude-opus-4-8`; note the omitted empty `phone_number` and the € type hint on the billing amount):
+**Assignment example — SuperNiceCompany customer support** (verbatim definition, typos included; offline mock run; note the omitted empty `phone_number`, the € type hint on the billing amount, the deterministic risk badges — the contact change is HIGH and needs a second confirmation click — the **Edit** button on every pending card, and the expanded trace panel with the generation and run spans):
 
 ![SuperNiceCompany validation UI](docs/screenshot-supernicecompany.png)
 
-**Reusability proof — Vinventions-style order processing** (same pipeline, different domain: tiered pricing applied from retrieved context, four independent approvals, exception flagging):
+**Reusability proof — Vinventions-style order processing** (same pipeline, different domain, annotated live by `claude-opus-4-8`: tiered pricing applied from retrieved context, packaging per order line, an auxiliary freight line, five independent approvals with risk badges — the delivery-address change is flagged HIGH — and exception flagging):
 
 ![Vinventions validation UI](docs/screenshot-vinventions.png)
 

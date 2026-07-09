@@ -6,8 +6,12 @@
     "user_prompt_template": "Client specific instructions :\n{{client_custom_prompt}}\nPurchase order document :\n{{po_document_markdown}}\nPricing matrix :\n{{pricing_matrix}}\nsummary :",
     "tools": [
       {
-        "signature": "create_order_line(sku : str, quantity : int, unit_price : float)",
-        "description": "creates an order line for the given SKU with the ordered quantity and the unit price in euros"
+        "signature": "create_order_line(sku : str, quantity : int, unit_price : float, packaging : str)",
+        "description": "creates an order line for the given SKU with the ordered quantity, the unit price in euros and the packaging type (for example bulk bags or cartons)"
+      },
+      {
+        "signature": "add_auxiliary_line(kind : str, amount : float)",
+        "description": "adds an auxiliary (non-product) line to the order, such as pallets, freight costs or rebates, with the amount in euros (negative for rebates)"
       },
       {
         "signature": "set_delivery_address(address : str)",
@@ -21,19 +25,23 @@
   },
   "policy": { "currencyThreshold": 1000 },
   "sampleInputs": {
-    "client_custom_prompt": "Customer of the Nomacorc Green Line range. Items marked as printed require artwork files before production can start. Always register the delivery address stated in the purchase order.",
-    "po_document_markdown": "PURCHASE ORDER PO-2026-0847\nFrom: Chateau Belleval, Route des Vignes 12, 33250 Pauillac, France\nDeliver to: Chateau Belleval warehouse, Zone Industrielle Nord, 33250 Pauillac, France\n\nOrder lines:\n- NOM-GRN-44 - Nomacorc Green 44mm, printed - 250000 units\n- NOM-SEL-47 - Nomacorc Select 47mm, plain - 120000 units\n\nNote: artwork for the printed closures will follow by separate mail.",
-    "pricing_matrix": "NOM-GRN-44: 0.042 EUR/unit up to 500000 units, 0.038 EUR/unit above\nNOM-SEL-47: 0.055 EUR/unit flat"
+    "client_custom_prompt": "Customer of the Nomacorc Green Line range. Items marked as printed require artwork files before production can start. Always register the delivery address stated in the purchase order. Register freight and pallet charges as separate auxiliary lines, never inside the unit price.",
+    "po_document_markdown": "PURCHASE ORDER PO-2026-0847\nFrom: Chateau Belleval, Route des Vignes 12, 33250 Pauillac, France\nDeliver to: Chateau Belleval warehouse, Zone Industrielle Nord, 33250 Pauillac, France\n\nOrder lines:\n- NOM-GRN-44 - Nomacorc Green 44mm, printed - 250000 units - bulk bags\n- NOM-SEL-47 - Nomacorc Select 47mm, plain - 120000 units - cartons\n\nFreight: express delivery, 450 EUR as agreed.\n\nNote: artwork for the printed closures will follow by separate mail.",
+    "pricing_matrix": "NOM-GRN-44: 0.042 EUR/unit up to 500000 units, 0.038 EUR/unit above\nNOM-SEL-47: 0.055 EUR/unit flat\nExpress freight France: 450 EUR flat"
   },
   "mockResult": {
     "toolCalls": [
       {
         "toolName": "create_order_line",
-        "args": { "sku": "NOM-GRN-44", "quantity": 250000, "unit_price": 0.042 }
+        "args": { "sku": "NOM-GRN-44", "quantity": 250000, "unit_price": 0.042, "packaging": "bulk bags" }
       },
       {
         "toolName": "create_order_line",
-        "args": { "sku": "NOM-SEL-47", "quantity": 120000, "unit_price": 0.055 }
+        "args": { "sku": "NOM-SEL-47", "quantity": 120000, "unit_price": 0.055, "packaging": "cartons" }
+      },
+      {
+        "toolName": "add_auxiliary_line",
+        "args": { "kind": "freight", "amount": 450 }
       },
       {
         "toolName": "set_delivery_address",
@@ -44,6 +52,6 @@
         "args": { "reason": "Artwork for printed item NOM-GRN-44 announced by separate mail, not yet received" }
       }
     ],
-    "replyText": "Order PO-2026-0847 for Chateau Belleval processed.\n\n2 order lines extracted:\n- NOM-GRN-44 (Nomacorc Green 44mm, printed): 250,000 units at €0.042/unit\n- NOM-SEL-47 (Nomacorc Select 47mm, plain): 120,000 units at €0.055/unit\n\nDelivery address registered: Chateau Belleval warehouse, Zone Industrielle Nord, 33250 Pauillac, France.\n\nAttention: the printed item NOM-GRN-44 requires artwork, which the customer announced will follow by separate mail. The order has been flagged until the artwork is received.\n\nTotal order value: €17,100."
+    "replyText": "Order PO-2026-0847 for Chateau Belleval processed.\n\n2 order lines extracted:\n- NOM-GRN-44 (Nomacorc Green 44mm, printed): 250,000 units at €0.042/unit, bulk bags\n- NOM-SEL-47 (Nomacorc Select 47mm, plain): 120,000 units at €0.055/unit, cartons\n\nAuxiliary line: express freight €450 (registered separately per client instructions).\n\nDelivery address registered: Chateau Belleval warehouse, Zone Industrielle Nord, 33250 Pauillac, France.\n\nAttention: the printed item NOM-GRN-44 requires artwork, which the customer announced will follow by separate mail. The order has been flagged until the artwork is received.\n\nTotal order value: €17,550 (products €17,100 + freight €450)."
   }
 }
