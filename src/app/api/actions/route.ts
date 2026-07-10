@@ -6,20 +6,18 @@ import { parseAgentDefinition } from "@/lib/parser";
 import { appendAudit, getRun, saveRun } from "@/lib/store";
 import type { RunRecord, RunStatus } from "@/lib/types";
 
-/* Human decision endpoint — the heart of the validation loop.
+/* Human decision endpoint.
  *
- * Invariants:
- * - The executor runs ONLY here, ONLY on "approved", and ONLY once per
- *   action. The whole read-check-write is serialized per run (withLock),
- *   so the 409 idempotency gate holds under concurrent requests too, not
- *   just for a double-click.
- * - The decision is persisted BEFORE the executor runs (write-ahead): if
- *   the process dies mid-execution, a replay hits the 409 instead of
- *   executing a second time.
+ * - The executor runs only here, only on "approved", and once per action. The
+ *   read-check-write is serialized per run (withLock), so the 409 check holds
+ *   under concurrent requests, not just a double-click.
+ * - The decision is persisted before the executor runs (write-ahead): if the
+ *   process dies mid-execution, a replay hits the 409 instead of executing
+ *   twice.
  * - Every decision writes an audit line, approved or rejected.
- * - Edited arguments are re-validated server-side against the parsed
- *   AgentSchema types (never trusted from the client), persisted with the
- *   decision, and audited as "action_edited" before anything executes. */
+ * - Edited arguments are re-validated server-side against the parsed types
+ *   (not trusted from the client), persisted with the decision, and audited
+ *   as "action_edited" before anything executes. */
 
 function deriveStatus(run: RunRecord): RunStatus {
   const total = run.toolCalls.length;
@@ -54,7 +52,7 @@ export async function POST(request: Request) {
       ? body.editedArgs
       : undefined;
   if (editedArgs && Object.keys(editedArgs).length > 0 && decision !== "approved") {
-    // Editing exists to correct-and-confirm; a rejection discards the action as proposed.
+    // Editing is for correct-and-confirm; a rejection discards the action as proposed.
     return Response.json({ error: "editedArgs is only valid with an 'approved' decision" }, { status: 400 });
   }
 
@@ -76,9 +74,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Re-validate any edits against the AgentSchema BEFORE the decision is
-    // recorded: an invalid edit rejects the whole request and the action
-    // stays pending — never "approved with whatever the client sent".
+    // Re-validate edits before recording the decision: an invalid edit rejects
+    // the whole request and the action stays pending.
     let editChanges: Record<string, { from: unknown; to: unknown }> | null = null;
     if (editedArgs && Object.keys(editedArgs).length > 0) {
       const fixture = await getFixture(run.fixtureId);
@@ -108,7 +105,7 @@ export async function POST(request: Request) {
     run.decisions[toolCall.id] = decision;
     const previousStatus = run.status;
     run.status = deriveStatus(run);
-    await saveRun(run); // write-ahead: decision AND edited args durable before anything executes
+    await saveRun(run); // write-ahead: decision and edits saved before anything executes
 
     if (editChanges) {
       await appendAudit({
@@ -138,7 +135,7 @@ export async function POST(request: Request) {
 
     let execution = null;
     if (decision === "approved") {
-      // The one and only call site of the executor — strictly after approval.
+      // The only call site of the executor, after approval.
       execution = await executor.execute(toolCall);
       await appendAudit({
         runId: run.runId,

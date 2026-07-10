@@ -1,10 +1,9 @@
 import type { NormalizedToolCall } from "../types";
 import type { AgentProvider, AgentRunRequest, AgentRunResult } from "./types";
 
-/* Mock provider — demo/offline mode. Returns the fixture's mockResult when
- * present (the assignment's Antoine example, verbatim), or a generic result
- * derived from the tool schemas. No network, no tokens, and the tool calls
- * still go through the exact same approval gate as real ones. */
+/* Mock provider for offline/demo runs. Returns the fixture's mockResult when
+ * present, or a generic result built from the tool schemas. No network, no
+ * tokens; the tool calls still go through the same approval gate as real ones. */
 
 let counter = 0;
 

@@ -5,9 +5,9 @@ import { useState } from "react";
 import type { UISpec } from "@/lib/types";
 
 /* Panel 3 — the free-text output ("Suggested Reply" for the example agent).
- * Sending is a human action too: it goes through the API and lands in the
- * audit trail. Nothing is sent automatically. Send is semantically an
- * approval of the reply, so it wears approve green. */
+ * Sending is a human action: it goes through the API and into the audit trail,
+ * never automatically. Send counts as approving the reply, so it uses the
+ * approve color. */
 
 export function OutputPanel({
   spec,
@@ -30,7 +30,7 @@ export function OutputPanel({
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      // Clipboard unavailable (permissions) — non-critical.
+      // Clipboard unavailable (permissions); non-critical.
     }
   }
 

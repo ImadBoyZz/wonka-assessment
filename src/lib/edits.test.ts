@@ -3,9 +3,9 @@ import { describeChanges, validateEditedArgs } from "./edits";
 import { parseToolSignature } from "./parser";
 
 /* Edit-before-approve validation: the client sends raw input strings; the
- * server must coerce and validate them against the SAME parsed types the
- * provider tools were built from. These tests use the assignment's own
- * signatures — including the one missing its closing parenthesis. */
+ * server coerces and validates them against the same parsed types the provider
+ * tools were built from. These tests use the assignment's own signatures,
+ * including the one missing its closing parenthesis. */
 
 const budgetTool = parseToolSignature("update_customer_budget_billing_plan(new_bbp : float)");
 // Verbatim assignment typo: missing closing parenthesis (recovery path).

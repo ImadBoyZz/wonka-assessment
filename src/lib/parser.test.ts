@@ -9,11 +9,11 @@ import {
   toProviderTools,
 } from "./parser";
 
-/* The strings below are VERBATIM from the assignment PDF — including the
+/* The strings below are verbatim from the assignment PDF, including the
  * typo'd placeholder keys ({{generic_intructions}}, {{custome_mail}}), the
- * typo'd parameter name (email_adress) and the missing closing parenthesis
- * on the second tool signature. The parser must survive the assignment
- * exactly as written, not a cleaned-up version of it. */
+ * typo'd parameter name (email_adress) and the missing closing parenthesis on
+ * the second tool signature. The parser must handle the assignment exactly as
+ * written, not a cleaned-up version. */
 
 const SYSTEM_PROMPT =
   "you are an agent for the customer support of SuperNiceCompany Corporation.\n\n" +

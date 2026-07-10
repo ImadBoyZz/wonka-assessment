@@ -6,10 +6,9 @@ import { MAX_AGENT_TURNS } from "@/lib/providers/shared";
 import { appendAudit, saveRun } from "@/lib/store";
 import type { RunRecord } from "@/lib/types";
 
-/* FASE B — run time. Renders the template with the human-entered inputs and
- * calls the provider with tool schemas derived from the same AgentSchema
- * that generated the UI. Tool calls come back as PENDING cards — nothing is
- * executed here, whatever the model asked for. */
+/* Run time. Renders the template with the entered inputs and calls the
+ * provider with tool schemas derived from the same AgentSchema that generated
+ * the UI. Tool calls come back as pending cards; nothing is executed here. */
 
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as {
@@ -53,8 +52,8 @@ export async function POST(request: Request) {
       status: "to_be_validated",
       createdAt: new Date().toISOString(),
       policy: fixture.policy,
-      // The natural tracing point: in production this becomes a Langfuse
-      // span. Prompts and metadata only — never keys.
+      // Trace for the run. In production this would be a Langfuse span.
+      // Prompts and metadata only, never keys.
       trace: {
         provider: outcome.providerUsed,
         model: outcome.result.model,

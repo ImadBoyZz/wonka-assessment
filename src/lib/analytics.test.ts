@@ -3,10 +3,10 @@ import { aggregateAudit, formatDuration } from "./analytics";
 import type { AuditEntry } from "./types";
 
 /* The analytics module is the read-only half of the dashboard: a pure fold
- * over the append-only audit log. These tests pin the aggregation semantics —
- * per-tool rates, per-field edit counts, status KPIs, median latency — plus
- * the graceful degradation for entries written before the structured `meta`
- * field existed. */
+ * over the append-only audit log. These tests pin the aggregation semantics
+ * (per-tool rates, per-field edit counts, status KPIs, median latency) plus
+ * the fallback for entries written before the structured `meta` field
+ * existed. */
 
 const T0 = "2026-07-01T10:00:00.000Z";
 

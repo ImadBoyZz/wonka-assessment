@@ -7,19 +7,13 @@ import type {
   ParsedTool,
 } from "./types";
 
-/* ------------------------------------------------------------------ */
-/* Structural Parser — 100% deterministic.                             */
-/*                                                                     */
-/* Everything structural (which placeholders exist, which tools exist, */
-/* which params they take, which are optional) is extracted with a     */
-/* small grammar, never with an LLM: structure must not hallucinate.   */
-/*                                                                     */
-/* The parser is deliberately forgiving because agent definitions are  */
-/* written by humans: the assignment's own example contains typo'd     */
-/* keys ({{custome_mail}}, email_adress) and a tool signature missing  */
-/* its closing parenthesis. Typos pass through untouched (they are the */
-/* real keys); broken syntax degrades, it never throws.                */
-/* ------------------------------------------------------------------ */
+/* Structural parser. Deterministic, no LLM. Extracts the placeholders, the
+ * tools, their parameters and which are optional, using a small grammar.
+ *
+ * It is deliberately forgiving: the assignment's example has typo'd keys
+ * ({{custome_mail}}, email_adress) and a tool signature missing its closing
+ * parenthesis. Typos pass through unchanged (they are the real keys); broken
+ * syntax degrades instead of throwing. */
 
 const PLACEHOLDER_RE = /\{\{\s*([A-Za-z_][A-Za-z0-9_]*)\s*\}\}/g;
 
@@ -88,7 +82,7 @@ export function parseToolSignature(signature: string, description = ""): ParsedT
 
 /** Split a parameter list on top-level commas. A depth-0 ")" is the closing
  *  parenthesis of the signature; reaching end-of-string without one is the
- *  PDF-typo recovery path — both end the list the same way. */
+ *  PDF-typo recovery path; both end the list the same way. */
 function splitTopLevel(body: string): string[] {
   const parts: string[] = [];
   let depth = 0;
@@ -130,7 +124,7 @@ function parseParam(part: string): ParsedParam | null {
 export function parseType(raw: string): { baseType: BaseType; required: boolean } {
   const t = raw.trim().toLowerCase();
 
-  // Wrapper form: head(inner) — closing parenthesis optional (PDF recovery).
+  // Wrapper form: head(inner), closing parenthesis optional (PDF recovery).
   const wrapper = t.match(/^([a-z_][a-z0-9_]*)\s*\(\s*(.*?)\s*\)?\s*$/);
   if (wrapper && t.includes("(")) {
     const [, head, inner] = wrapper;
@@ -179,12 +173,11 @@ export function parseAgentDefinition(def: AgentDefinition): AgentSchema {
   };
 }
 
-/* ----------------------- parser diagnostics ------------------------ */
-/* The parser never throws, but silent degradation is its own failure   */
-/* mode: a placeholder key or tool name outside the supported grammar   */
-/* (e.g. accented identifiers — "{{données_client}}", "créer_ligne")    */
-/* would produce a UI that LOOKS complete while missing an input or     */
-/* mangling a tool name. These checks make that degradation visible.    */
+/* Parser diagnostics. The parser never throws, but a placeholder key or tool
+ * name outside the supported grammar (e.g. accented identifiers like
+ * "{{données_client}}" or "créer_ligne") would silently produce a UI that
+ * looks complete while missing an input or mangling a tool name. These checks
+ * surface that so it can be shown to the user. */
 
 const LOOSE_PLACEHOLDER_RE = /\{\{([^{}]*)\}\}/g;
 const IDENT_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
@@ -220,10 +213,9 @@ export function collectParserWarnings(def: AgentDefinition, schema: AgentSchema)
   return warnings;
 }
 
-/* ------------------- derived views of the schema ------------------- */
-/* The same AgentSchema feeds both the UI generation and the runtime   */
-/* provider call — one source of truth, so the UI can never disagree   */
-/* with the tools the model was actually given (no schema drift).      */
+/* Derived views of the schema. The same AgentSchema feeds both the UI
+ * generation and the runtime provider call, so the UI and the tools given to
+ * the model stay in sync. */
 
 export interface ProviderToolSchema {
   name: string;
@@ -275,8 +267,7 @@ export function renderUserPrompt(template: string, inputs: Record<string, string
 }
 
 /** A tool is treated as mutating unless its name clearly reads as read-only.
- *  Deliberately conservative and deterministic: the safety classification of
- *  an action is never delegated to an LLM. */
+ *  Conservative and deterministic; the classification is never asked from an LLM. */
 const READONLY_PREFIXES = ["get_", "list_", "read_", "search_", "find_", "fetch_", "lookup_", "check_"];
 
 export function isMutatingTool(name: string): boolean {

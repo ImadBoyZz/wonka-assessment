@@ -1,11 +1,8 @@
 import { z } from "zod";
 
-/* ------------------------------------------------------------------ */
-/* Agent definition — the input of the generator.                      */
-/* This mirrors how the assignment presents an agent: a system prompt, */
-/* a user prompt template with {{placeholders}}, and tool signatures   */
-/* written in pseudocode ("name(param : type, ...)").                  */
-/* ------------------------------------------------------------------ */
+/* Agent definition, the input of the generator: a system prompt, a user
+ * prompt template with {{placeholders}}, and tool signatures written in
+ * pseudocode ("name(param : type, ...)"). */
 
 export const ToolDefinitionSchema = z.object({
   signature: z.string().min(1),
@@ -20,9 +17,9 @@ export const AgentDefinitionSchema = z.object({
 });
 export type AgentDefinition = z.infer<typeof AgentDefinitionSchema>;
 
-/* A fixture is a definition file plus demo data. Only `definition`    */
-/* feeds the generator; sampleInputs/mockResult exist so a reviewer    */
-/* can exercise the flow with one click (and without burning tokens).  */
+/* A fixture is a definition plus demo data. Only `definition` feeds the
+ * generator; sampleInputs/mockResult let a reviewer run the flow with one
+ * click and without spending tokens. */
 
 export const MockResultSchema = z.object({
   toolCalls: z.array(
@@ -52,11 +49,8 @@ export const FixtureSchema = z.object({
 });
 export type Fixture = z.infer<typeof FixtureSchema>;
 
-/* ------------------------------------------------------------------ */
-/* AgentSchema — output of the deterministic Structural Parser.        */
-/* This is the ground truth: keys, types and counts can never be       */
-/* invented or dropped by an LLM because no LLM is involved here.      */
-/* ------------------------------------------------------------------ */
+/* AgentSchema, the output of the structural parser. The keys, types and
+ * counts here come from parsing only; no LLM is involved. */
 
 export type BaseType = "float" | "int" | "str" | "bool" | "unknown";
 
@@ -87,15 +81,13 @@ export interface AgentSchema {
   userPromptTemplate: string;
   placeholders: ParsedPlaceholder[];
   tools: ParsedTool[];
-  /** Non-placeholder text after the last placeholder (e.g. "answer :") — signals a free-text completion. */
+  /** Non-placeholder text after the last placeholder (e.g. "answer :"); signals a free-text completion. */
   trailingText: string | null;
 }
 
-/* ------------------------------------------------------------------ */
-/* UISpec — the language-agnostic JSON contract between generation     */
-/* and rendering. (In a Python backend this would be the 1:1 Pydantic  */
-/* model; Zod is the TypeScript spelling of the same contract.)        */
-/* ------------------------------------------------------------------ */
+/* UISpec, the JSON contract between generation and rendering. It is
+ * language-agnostic: in a Python backend this would be the equivalent
+ * Pydantic model. */
 
 export const FieldTypeSchema = z.enum([
   "text",
@@ -109,7 +101,7 @@ export const FieldTypeSchema = z.enum([
 export type FieldType = z.infer<typeof FieldTypeSchema>;
 
 /** primary: the per-run input a reviewer must see; context: static configuration;
- *  retrieved: RAG/lookup data that is input to the model but noise to the reviewer. */
+ *  retrieved: lookup/RAG data that the model uses but the reviewer does not need. */
 export const FieldRoleSchema = z.enum(["primary", "context", "retrieved"]);
 export type FieldRole = z.infer<typeof FieldRoleSchema>;
 
@@ -125,8 +117,8 @@ export type Field = z.infer<typeof FieldSchema>;
 export const ToolActionSchema = z.object({
   toolName: z.string(),
   label: z.string(),
-  /** Whether approving this action mutates external state (update_, create_, ...).
-   *  Derived deterministically — never left to the LLM. */
+  /** Whether approving this action changes external state. Derived from the
+   *  tool name, not from the LLM. */
   mutating: z.boolean(),
   fields: z.array(FieldSchema),
 });
@@ -145,9 +137,7 @@ export const UISpecSchema = z.object({
 });
 export type UISpec = z.infer<typeof UISpecSchema>;
 
-/* ------------------------------------------------------------------ */
-/* Runtime — one validation run and the human decisions on it.         */
-/* ------------------------------------------------------------------ */
+/* Runtime: one validation run and the human decisions on it. */
 
 export interface NormalizedToolCall {
   id: string;
@@ -157,8 +147,8 @@ export interface NormalizedToolCall {
 
 export type RunStatus = "to_be_validated" | "confirmed" | "rejected" | "partially_confirmed";
 
-/** Observability snapshot of one agent run — what a Langfuse span would carry
- *  in production. Contains prompts and metadata only, never API keys. */
+/** Snapshot of one agent run for the trace panel. Prompts and metadata only,
+ *  never API keys. */
 export interface RunTrace {
   /** Provider that actually answered (after any fallback). */
   provider: string;
@@ -169,7 +159,7 @@ export interface RunTrace {
   /** Providers that were skipped or failed before one answered. */
   fallbackPath: string[];
   systemPrompt: string;
-  /** The user prompt template after placeholder substitution — exactly what the model saw. */
+  /** The user prompt template after placeholder substitution, exactly what the model saw. */
   renderedUserPrompt: string;
 }
 
@@ -190,11 +180,9 @@ export interface RunRecord {
   trace?: RunTrace;
 }
 
-/** Structured companion to the human-readable `detail` string. The analytics
- *  dashboard aggregates over these fields — presentation strings are for
- *  people and are never parsed back into data (the same line the generator
- *  draws: structure is never recovered from free text). All fields optional:
- *  entries written before this field existed stay valid. */
+/** Structured companion to the human-readable `detail` string. The dashboard
+ *  aggregates over these fields instead of parsing the detail text. All fields
+ *  optional, so entries written before this field existed stay valid. */
 export interface AuditMeta {
   fixtureId?: string;
   provider?: string;

@@ -5,11 +5,10 @@ import type { AgentProvider, AgentRunRequest, AgentRunResult } from "./types";
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-4-8";
 
-/* Primary provider. Runs a SIDE-EFFECT-FREE agentic loop: every tool call the
- * model makes is intercepted and acknowledged as "queued for human
- * validation" — nothing is executed — so the model completes its turn and
- * writes the final reply as if the queued actions will be applied. The loop
- * is capped (shared assessment keys), as is max_tokens per iteration. */
+/* Primary provider. The agent loop has no side effects: every tool call is
+ * intercepted and acknowledged as "queued for human validation" instead of
+ * being executed, so the model finishes its turn and writes the final reply.
+ * The loop and max_tokens are capped (shared assessment keys). */
 
 export const anthropicProvider: AgentProvider = {
   name: "anthropic",

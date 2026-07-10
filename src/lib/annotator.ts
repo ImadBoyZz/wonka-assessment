@@ -4,18 +4,14 @@ import { z } from "zod";
 import type { AgentSchema } from "./types";
 import { FieldRoleSchema, FieldTypeSchema } from "./types";
 
-/* ------------------------------------------------------------------ */
-/* Semantic Annotator — the ONLY LLM step in the generation pipeline.  */
-/*                                                                     */
-/* It supplies presentation metadata (labels, panel titles, field-type */
-/* hints, placeholder roles) for keys the Structural Parser already    */
-/* extracted. It can never add or remove a field: the merger iterates  */
-/* over the parser's keys and merely looks up annotations, so invented */
-/* keys are ignored and missing keys fall back deterministically.      */
-/*                                                                     */
-/* Failure path: 1 retry with the error as context, then null → the    */
-/* merger degrades to template-label / titleCase quality. Never throws.*/
-/* ------------------------------------------------------------------ */
+/* Semantic annotator, the only LLM step in the generation pipeline. It adds
+ * presentation metadata (labels, panel titles, field-type hints, placeholder
+ * roles) for keys the parser already extracted. It can't add or remove a
+ * field: the merger iterates over the parser's keys and looks up annotations,
+ * so invented keys are ignored and missing ones fall back to plain labels.
+ *
+ * On failure it retries once with the error as context, then returns null and
+ * the merger falls back to titleCase labels. It never throws. */
 
 export const AnnotationsSchema = z.object({
   agentTitle: z.string(),

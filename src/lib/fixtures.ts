@@ -2,9 +2,8 @@ import { promises as fs } from "fs";
 import path from "path";
 import { FixtureSchema, type Fixture } from "./types";
 
-/* Agent definitions live as plain JSON data files in /fixtures.
- * Dropping a new file there is the entire "add a new agent" workflow —
- * no code changes, which is the point of the generator. */
+/* Agent definitions are plain JSON files in /fixtures. Adding a new file there
+ * is the whole "add an agent" workflow; no code changes. */
 
 const FIXTURES_DIR = path.join(process.cwd(), "fixtures");
 

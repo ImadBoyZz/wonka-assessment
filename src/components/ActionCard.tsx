@@ -11,24 +11,20 @@ import { assessRisk, type RiskLevel } from "@/lib/risk";
 
 /* Panel 2 card — one proposed tool call, pending until a human decides.
  *
- * - Only arguments the model actually provided are shown: an optional
- *   parameter left empty (like phone_number in the example) produces no row.
- * - Arguments NOT declared in the schema are still shown, flagged — hiding
- *   what would be executed is exactly the wrong failure mode.
+ * - Only arguments the model actually provided are shown; an empty optional
+ *   parameter (like phone_number in the example) produces no row.
+ * - Arguments not declared in the schema are still shown, flagged, rather
+ *   than hidden.
  * - Values render prominently so a reviewer can spot a manipulated value
- *   (prompt injection) before approving.
- * - Declared arguments are EDITABLE before approval (correct-and-confirm,
- *   the reference project's "all order fields are editable"). Edits reuse
- *   the same whitelisted FieldInput registry as the input panel and are
- *   re-validated server-side against the AgentSchema types — this client
- *   only proposes strings. Undeclared arguments stay read-only: there is
- *   no declared type to validate an edit against.
- * - Every card carries a deterministic risk badge (src/lib/risk.ts, rules
- *   R1–R4 — never the model's own opinion); HIGH requires an explicit
- *   second confirmation click before the approve is sent. */
+ *   before approving.
+ * - Declared arguments are editable before approval. Edits reuse the same
+ *   FieldInput components as the input panel and are re-validated on the
+ *   server; this client only sends strings. Undeclared arguments stay
+ *   read-only (no declared type to validate against).
+ * - Each card shows a risk badge (src/lib/risk.ts); high risk needs a second
+ *   confirmation click before the approve is sent. */
 
-/* Risk is the loudest signal on a card: only medium/high carry color,
- * low stays a quiet outline — color budget goes to what needs attention. */
+/* Only medium/high risk carry color; low stays a quiet outline. */
 const RISK_STYLE: Record<RiskLevel, string> = {
   low: "border border-line-strong text-ink-faint",
   medium: "bg-warn-soft text-warn-deep",
@@ -39,8 +35,7 @@ function hasValue(v: unknown): boolean {
   return v !== undefined && v !== null && v !== "";
 }
 
-/** Tool-call arg → editable input string (the inverse of what the server
- *  coerces back with Zod). */
+/** Tool-call arg to editable input string (the server coerces it back). */
 function toInputString(v: unknown): string {
   if (v === undefined || v === null) return "";
   if (typeof v === "boolean") return v ? "true" : "false";
@@ -70,13 +65,12 @@ export function ActionCard({
   const [confirming, setConfirming] = useState(false);
 
   const label = action?.label ?? titleCase(call.toolName);
-  // A tool call OUTSIDE the declared schema is the most suspicious case of
-  // all — it must never look safer than a declared one, so the mutating
-  // classification falls back to the same deterministic heuristic.
+  // For an undeclared tool there's no schema flag, so fall back to the
+  // name-based heuristic rather than showing it as non-mutating.
   const mutating = action?.mutating ?? isMutatingTool(call.toolName);
   const risk = assessRisk(call, action, policy);
-  // Only declared tools with declared params can be edited (see server-side
-  // validation: undeclared → nothing to validate against).
+  // Only declared params can be edited (undeclared ones have no type to
+  // validate against).
   const canEdit = decision === undefined && (action?.fields.length ?? 0) > 0;
 
   // Schema-ordered known params first, then any unrecognized extras.
@@ -97,8 +91,7 @@ export function ActionCard({
   }
 
   function changedDraft(): Record<string, string> | undefined {
-    // Send only what actually changed — the audit diff stays minimal and an
-    // untouched field can never be "re-approved" to a stale value.
+    // Send only changed fields, so the audit diff stays minimal.
     const changed: Record<string, string> = {};
     for (const f of action?.fields ?? []) {
       if ((draft[f.key] ?? "") !== toInputString(call.args[f.key])) changed[f.key] = draft[f.key] ?? "";
@@ -106,9 +99,9 @@ export function ActionCard({
     return Object.keys(changed).length > 0 ? changed : undefined;
   }
 
-  /** HIGH-risk approvals need a second, explicit click; the first one only
-   *  arms the confirmation step. Nothing about this lives on the server —
-   *  the server-side gates (409, validation) are unchanged. */
+  /** High-risk approvals need a second click; the first only arms the
+   *  confirmation. This is UI only; the server gates (409, validation) are
+   *  unchanged. */
   function requestApprove() {
     if (risk.level === "high" && !confirming) {
       setConfirming(true);

@@ -1,25 +1,17 @@
 import { isMutatingTool } from "./parser";
 import type { NormalizedToolCall, RiskPolicy, ToolAction } from "./types";
 
-/* ------------------------------------------------------------------ */
-/* Risk classification — rule-based, 100% deterministic, NO LLM.       */
-/*                                                                     */
-/* Same design line as the mutating flag: anything that influences how */
-/* carefully a human should look at an action is derived from the      */
-/* schema and the concrete values, never delegated to the model that   */
-/* proposed the action (it would grade its own homework).              */
-/*                                                                     */
-/* Four rules, in escalating order:                                    */
-/*  R1  read-only tool, all arguments declared            → LOW        */
-/*  R2  mutating tool                                     → MEDIUM     */
-/*  R3  outside the declared schema (undeclared tool or   → HIGH       */
-/*      undeclared argument) — the prompt-injection shape              */
-/*  R4  mutating + a known fraud vector from the reference→ HIGH       */
-/*      case: a currency amount at/above the policy                    */
-/*      threshold, or a contact/address change (invoice &              */
-/*      delivery redirection).                                         */
-/* HIGH requires an explicit second confirmation click in the UI.      */
-/* ------------------------------------------------------------------ */
+/* Rule-based risk classification. Deterministic, no LLM: the level is derived
+ * from the tool schema and the argument values, not asked from the model that
+ * proposed the action.
+ *
+ * Rules, in escalating order:
+ *   R1  read-only tool, all arguments declared            -> low
+ *   R2  mutating tool                                     -> medium
+ *   R3  undeclared tool or undeclared argument            -> high
+ *   R4  mutating + a fraud vector: a currency amount at   -> high
+ *       or above the policy threshold, or a contact/address change
+ * High risk requires a second confirmation click in the UI. */
 
 export type RiskLevel = "low" | "medium" | "high";
 
@@ -31,8 +23,7 @@ export interface RiskAssessment {
 
 export const DEFAULT_CURRENCY_THRESHOLD = 1000;
 
-/** Keys whose change redirects money or goods to a new destination —
- *  the classic manipulation target in the reference project's domain. */
+/** Fields whose change could redirect money or goods (email, phone, address). */
 const REDIRECTION_KEY_RE = /mail|phone|tel|address/i;
 
 const RANK: Record<RiskLevel, number> = { low: 0, medium: 1, high: 2 };
@@ -56,7 +47,7 @@ export function assessRisk(
   const mutating = action?.mutating ?? isMutatingTool(call.toolName);
   if (mutating) escalate("medium", "changes external state (R2)");
 
-  // R3 — outside the declared schema.
+  // R3: undeclared tool or argument.
   if (!action) {
     escalate("high", "tool is not declared in the agent definition (R3)");
   } else {
@@ -67,7 +58,7 @@ export function assessRisk(
     }
   }
 
-  // R4 — fraud vectors, only meaningful when the action mutates something.
+  // R4: fraud vectors, only relevant when the action mutates something.
   if (mutating && action) {
     const threshold = policy?.currencyThreshold ?? DEFAULT_CURRENCY_THRESHOLD;
     for (const field of action.fields) {

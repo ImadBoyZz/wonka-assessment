@@ -1,9 +1,8 @@
 /* In-process mutex, keyed per run. The file-based run store has no
- * transactions, so every read-modify-write on a run must be serialized —
- * otherwise two concurrent decisions could both pass the 409 idempotency
- * check before either one persists (and the executor would run twice).
- * In production this becomes a database transaction / SELECT FOR UPDATE;
- * the single call-site-per-run contract stays identical. */
+ * transactions, so read-modify-write on a run is serialized here. Without it,
+ * two concurrent decisions could both pass the 409 check before either one
+ * persists, and the executor would run twice. In production this would be a
+ * database transaction (SELECT FOR UPDATE). */
 
 const chains = new Map<string, Promise<unknown>>();
 

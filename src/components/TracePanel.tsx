@@ -3,12 +3,10 @@
 import { Path } from "@phosphor-icons/react";
 import type { RunTrace } from "@/lib/types";
 
-/* Trace panel — the observability story made visible. One generation span +
- * one run span, exactly what would flow to Langfuse in production (the README
- * calls the annotator and agent calls "the natural Langfuse tracing points").
- * Metadata and prompts only: API keys never reach the client, and provider
- * failures arrive as the same sanitized warnings the toolbar already shows.
- * Raw prompts render on dark "machine glass" — what the model actually saw. */
+/* Trace panel — one generation span and one run span, the points that would
+ * flow to Langfuse in production. Metadata and prompts only: API keys never
+ * reach the client. Raw prompts render on the dark blocks, showing what the
+ * model actually saw. */
 
 export interface GenerationTraceInfo {
   cacheHit: boolean;

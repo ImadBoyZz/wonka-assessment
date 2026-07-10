@@ -1,18 +1,10 @@
 import type { AuditEntry, RunStatus } from "./types";
 
-/* ------------------------------------------------------------------ */
-/* Audit analytics — pure, deterministic aggregation over the          */
-/* append-only audit log. Read-only by construction: this module       */
-/* never touches the run store, the executor or any route logic; it    */
-/* folds AuditEntry[] into numbers.                                    */
-/*                                                                     */
-/* It aggregates over the structured `meta` field, not the human-      */
-/* readable detail strings — the same design line as the generator:    */
-/* presentation text is for people, structure is never recovered from  */
-/* free text. Entries written before `meta` existed degrade gracefully */
-/* via two narrow fallbacks (tool names are [A-Za-z_]+ by construction,*/
-/* so the prefix parse is unambiguous).                                */
-/* ------------------------------------------------------------------ */
+/* Aggregation over the append-only audit log. Read-only: this module folds
+ * AuditEntry[] into numbers and never touches the run store, the executor or
+ * any route. It reads the structured `meta` field rather than parsing the
+ * detail strings; entries written before `meta` existed fall back to two
+ * narrow detail parsers below. */
 
 export interface ToolStats {
   toolName: string;
@@ -45,7 +37,7 @@ export interface DashboardStats {
     decided: number;
     approved: number;
     rejected: number;
-    /** action_edited events — each one is a human correcting the AI. */
+    /** action_edited events: each one is a human correcting the AI. */
     edits: number;
     executed: number;
     repliesSent: number;
@@ -62,9 +54,8 @@ export interface DashboardStats {
   lastEventAt: string | null;
 }
 
-/** Tool names are `[A-Za-z_]+` by construction (parser + provider layer), so
- *  the text before the first "(" or ":" in a detail string is unambiguous.
- *  Used only for entries that predate the structured meta field. */
+/** Fallback for entries written before the structured meta field. Tool names
+ *  are [A-Za-z_]+, so the text before the first "(" or ":" is the tool name. */
 function toolNameFromDetail(detail: string): string | null {
   const match = /^([A-Za-z_]+)\s*[(:]/.exec(detail);
   return match ? match[1] : null;
@@ -194,8 +185,7 @@ export function aggregateAudit(entries: AuditEntry[]): DashboardStats {
   };
 }
 
-/** "1m 42s" / "12s" / "2h 05m" — coarse on purpose: reviewers compare
- *  magnitudes here, not milliseconds. */
+/** "12s" / "1m 42s" / "2h 05m". Coarse on purpose. */
 export function formatDuration(ms: number): string {
   const seconds = Math.round(ms / 1000);
   if (seconds < 60) return `${seconds}s`;

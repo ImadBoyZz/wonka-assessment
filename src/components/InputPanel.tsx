@@ -5,12 +5,10 @@ import { useState } from "react";
 import type { Field, UISpec } from "@/lib/types";
 import { FieldInput, FieldTypeIcon } from "./FieldRenderer";
 
-/* Panel 1 — the run inputs. Primary fields (the per-run input a reviewer
- * must see) are expanded; context/retrieved fields are collapsed by default,
- * mirroring the example UI where only the customer mail is visible while
- * generic instructions and similar Q&A stay out of view — but every field
- * remains reachable and editable. Being open IS the emphasis: primary
- * fields need no extra color. */
+/* Panel 1 — the run inputs. Primary fields are expanded; context and
+ * retrieved fields are collapsed by default (like the example UI, where only
+ * the customer mail is shown and the generic instructions and similar Q&A stay
+ * out of view), but every field stays reachable and editable. */
 
 const ROLE_HINT: Record<string, string> = {
   context: "static context",

@@ -5,11 +5,10 @@ import { aggregateAudit, formatDuration, RUN_STATUSES } from "@/lib/analytics";
 import { readAudit } from "@/lib/store";
 import type { RunStatus } from "@/lib/types";
 
-/* Audit analytics — a read-only fold over the append-only audit log
+/* Audit analytics — read-only aggregation over the audit log
  * (.data/audit.jsonl). Server component: it reads the same store the audit
- * trail writes to and renders numbers; it cannot touch runs, decisions or
- * the executor. Covers the reference project's nice-to-haves: KPIs per
- * validation state and human-correction (≈ AI error) rates per field. */
+ * trail writes to and renders numbers; it never touches runs, decisions or the
+ * executor. Shows KPIs per run status and human-correction rates per field. */
 
 export const metadata: Metadata = {
   title: "Audit analytics",
@@ -25,10 +24,9 @@ const STATUS_LABEL: Record<RunStatus, string> = {
   to_be_validated: "to be validated",
 };
 
-/* Segment colors validated with the dataviz palette checker (lightness band,
- * chroma floor, contrast vs panel); the amber↔red deutan pair sits in the
- * 8–12 floor band, which is why every segment also carries a 2px surface gap,
- * a legend swatch AND a text count — identity is never color-alone. */
+/* Segment colors checked for contrast against the panel. The amber/red pair is
+ * hard to tell apart with red-green color blindness, so each segment also has a
+ * 2px gap, a legend swatch and a text count, never color alone. */
 const STATUS_BAR: Record<RunStatus, string> = {
   confirmed: "bg-approve",
   partially_confirmed: "bg-warn",

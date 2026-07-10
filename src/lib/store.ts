@@ -3,14 +3,11 @@ import { promises as fs } from "fs";
 import path from "path";
 import type { AgentDefinition, AuditEntry, RunRecord, UISpec } from "./types";
 
-/* ------------------------------------------------------------------ */
-/* File-based stores under .data/ (gitignored).                        */
-/* - UISpec cache keyed by hash(definition): the LLM annotation runs   */
-/*   once per definition; the run path stays LLM-free apart from the   */
-/*   agent call itself.                                                */
-/* - Run store + append-only audit log ("full audit trail on every    */
-/*   action"). In production these would be database tables.           */
-/* ------------------------------------------------------------------ */
+/* File-based stores under .data/ (gitignored):
+ *  - UISpec cache keyed by hash(definition), so the annotator runs once per
+ *    definition.
+ *  - Run store + append-only audit log.
+ * In production these would be database tables. */
 
 const DATA_DIR = path.join(process.cwd(), ".data");
 const SPEC_DIR = path.join(DATA_DIR, "uispecs");
@@ -28,9 +25,8 @@ export interface CachedSpec {
   annotationSource: "llm" | "fallback";
   annotationModel?: string;
   annotationError?: string;
-  /** Structural degradations the parser recovered from (unsupported
-   *  placeholder syntax, mangled tool names) — shown to the user so a
-   *  UI that silently misses a field can never look complete. */
+  /** Parser warnings (unsupported placeholder syntax, mangled tool names),
+   *  shown to the user. */
   parserWarnings?: string[];
   generatedAt: string;
   generationMs: number;

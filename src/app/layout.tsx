@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import "./globals.css";
 
-/* IBM Plex: a human-machine-interface family — sans for UI text, mono for
- * everything the machine said (args, prompts, audit lines, metrics). */
+/* IBM Plex: sans for UI text, mono for machine output (args, prompts, audit
+ * lines, metrics). */
 
 const plexSans = IBM_Plex_Sans({
   variable: "--font-plex-sans",

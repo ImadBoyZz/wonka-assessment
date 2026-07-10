@@ -2,8 +2,8 @@ import { listFixtures } from "@/lib/fixtures";
 
 export const dynamic = "force-dynamic";
 
-/** Agent definitions available to the generator. Dropping a new JSON file in
- *  /fixtures makes it appear here — no code changes. */
+/** Agent definitions available to the generator. A new JSON file in /fixtures
+ *  appears here automatically. */
 export async function GET() {
   const fixtures = await listFixtures();
   return Response.json({

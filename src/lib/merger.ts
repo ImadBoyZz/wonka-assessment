@@ -2,15 +2,11 @@ import type { Annotations } from "./annotator";
 import type { AgentSchema, BaseType, Field, FieldType, ToolAction, UISpec } from "./types";
 import { isMutatingTool } from "./parser";
 
-/* ------------------------------------------------------------------ */
-/* Merger — deterministic join of ground truth and annotations.        */
-/*                                                                     */
-/* Iterates over the PARSER's keys only: the LLM cannot add, drop or   */
-/* retype a field. Annotations refine presentation within the limits   */
-/* of the structural type (a float may present as currency, never as   */
-/* text); anything missing falls back to the template label or         */
-/* titleCase(key). Never throws, never returns an invalid UISpec.      */
-/* ------------------------------------------------------------------ */
+/* Merger. Joins the parsed schema with the annotations into a UISpec. It
+ * iterates over the parser's keys only, so the annotations can't add, drop or
+ * retype a field. A type hint can only refine within the base type (a float
+ * may show as currency, never as text). Missing annotations fall back to the
+ * template label or titleCase(key). */
 
 export function titleCase(key: string): string {
   return key
@@ -46,8 +42,8 @@ export function mergeToUISpec(schema: AgentSchema, annotations: Annotations | nu
       label: ann?.label ?? p.labelBefore ?? titleCase(p.key),
       type: resolveType("placeholder", ann?.type),
       required: true,
-      // Without annotations we cannot tell primary from context — show everything
-      // prominently rather than hide a field the reviewer might need.
+      // Without annotations we can't tell primary from context, so show every
+      // field rather than hide one the reviewer might need.
       role: ann?.role ?? "primary",
     };
   });
@@ -65,7 +61,7 @@ export function mergeToUISpec(schema: AgentSchema, annotations: Annotations | nu
           key: param.name,
           label: pAnn?.label ?? titleCase(param.name),
           type: resolveType(param.baseType, pAnn?.type),
-          required: param.required, // structural fact — never taken from the LLM
+          required: param.required, // comes from the parser, not the LLM
         };
       }),
     };

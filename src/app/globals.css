@@ -1,12 +1,11 @@
 @import "tailwindcss";
 
-/* Design tokens — "paper instrument".
+/* Design tokens.
  *
- * Warm paper neutrals (hue 84) carry every surface; cool ink (hue ~260)
- * carries text and primary actions. The only saturated color on screen is
- * decision semantics: approve green, reject red, warning amber, plus a quiet
- * steel-blue accent reserved for focus/links/pending — so semantic color
- * never competes with decoration in a UI whose whole job is a decision. */
+ * Warm paper neutrals (hue 84) for surfaces; cool ink (hue ~260) for text and
+ * primary actions. The only saturated colors are decision semantics: approve
+ * green, reject red, warning amber, plus a quiet steel-blue accent for
+ * focus, links and pending state. */
 :root {
   --page: oklch(0.966 0.006 84);
   --panel: oklch(0.993 0.0025 84);
@@ -36,12 +35,12 @@
   --accent-deep: oklch(0.41 0.08 255);
   --accent-soft: oklch(0.937 0.019 255);
 
-  /* Chart-only: the "pending" segment in analytics. Same steel-blue hue as
-   * the accent, chroma raised past the palette validator's floor so it never
-   * reads as gray next to the semantic green/amber/red. */
+  /* Chart-only: the "pending" segment in analytics. Same steel-blue hue as the
+   * accent, with more chroma so it doesn't read as gray next to the semantic
+   * green/amber/red. */
   --chart-pending: oklch(0.49 0.11 255);
 
-  /* Light mono text on the dark "machine glass" blocks (raw prompts, JSON). */
+  /* Light mono text on the dark code blocks (raw prompts, JSON). */
   --glass-ink: oklch(0.9 0.005 84);
   --glass-ink-soft: oklch(0.72 0.01 258);
 }

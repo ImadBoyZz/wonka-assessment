@@ -1,17 +1,13 @@
 import { z } from "zod";
 import type { ParsedParam, ParsedTool } from "./types";
 
-/* ------------------------------------------------------------------ */
-/* Edit-before-approve validation — 100% server-side.                  */
-/*                                                                     */
-/* A reviewer may correct the arguments of a pending action before     */
-/* approving it ("all order fields are editable"). The client sends    */
-/* raw input strings; nothing it says about types is trusted. Every    */
-/* edited value is re-validated here against the SAME AgentSchema      */
-/* param types that generated the UI and the provider tool schemas —   */
-/* one source of truth, so an edit can never smuggle in a value the    */
-/* declared signature would not allow.                                 */
-/* ------------------------------------------------------------------ */
+/* Server-side validation for edited action arguments.
+ *
+ * A reviewer can correct a pending action's arguments before approving it.
+ * The client sends raw strings; the types it claims are not trusted. Each
+ * edited value is re-validated here against the same parameter types the
+ * parser produced, so an edit can't set a value the tool signature would not
+ * allow. */
 
 export type EditValidationResult =
   | {
@@ -24,9 +20,8 @@ export type EditValidationResult =
     }
   | { ok: false; errors: string[] };
 
-/** Zod validator per structural base type. Mirrors jsonSchemaType() in
- *  parser.ts: what the model was allowed to send is what a human is
- *  allowed to correct it to. */
+/** Zod validator per base type. Mirrors jsonSchemaType() in parser.ts: a
+ *  human may correct a value to whatever the model was allowed to send. */
 function validatorFor(param: ParsedParam): z.ZodType<unknown> {
   switch (param.baseType) {
     case "float":

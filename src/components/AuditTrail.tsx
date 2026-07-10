@@ -3,9 +3,8 @@
 import { ClockCounterClockwise } from "@phosphor-icons/react";
 import type { AuditEntry } from "@/lib/types";
 
-/* Append-only audit trail for the current run — every system event and every
- * human decision, in order ("full audit trail on every action"). Rendered as
- * a log: mono rows, a colored event dot instead of shouting pills. */
+/* Audit trail for the current run — every system event and human decision, in
+ * order. Rendered as a log: mono rows with a colored event dot. */
 
 const EVENT_DOT: Record<AuditEntry["event"], string> = {
   run_created: "bg-accent",

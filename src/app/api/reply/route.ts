@@ -1,10 +1,10 @@
 import { withLock } from "@/lib/lock";
 import { appendAudit, getRun, saveRun } from "@/lib/store";
 
-/* Marks the suggested reply as sent (mock send — the prototype has no email
- * backend). The reply is a validation object too: sending is a human action
- * and lands in the audit trail like any approval. Serialized per run so the
- * "already sent" gate holds under concurrent requests. */
+/* Marks the suggested reply as sent (mock send; the prototype has no email
+ * backend). Sending is a human action and lands in the audit trail like any
+ * approval. Serialized per run so the "already sent" check holds under
+ * concurrent requests. */
 
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as { runId?: string } | null;
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       meta: { fixtureId: run.fixtureId },
     });
     if (run.status !== previousStatus) {
-      // Same invariant as the actions route: every status change is audited.
+      // Same as the actions route: every status change is audited.
       await appendAudit({
         runId: run.runId,
         actor: "system",

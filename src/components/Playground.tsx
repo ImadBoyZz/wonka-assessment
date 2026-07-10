@@ -10,12 +10,11 @@ import { FieldTypeIcon } from "./FieldRenderer";
 import { InputPanel } from "./InputPanel";
 
 /* UISpec Playground — paste any agent definition and watch the validation UI
- * appear. The deterministic half of the pipeline (Structural Parser + Merger)
- * is pure TypeScript with no server dependency, so it runs LIVE in the
- * browser on every keystroke: instant proof that structure never needs an
- * LLM. The one AI step (Semantic Annotator) sits behind an explicit button
- * and calls the same server pipeline as /api/generate — but nothing here is
- * cached or persisted; the playground is ephemeral by design. */
+ * appear. The deterministic half of the pipeline (parser + merger) is pure
+ * TypeScript with no server dependency, so it runs in the browser on every
+ * keystroke. The annotator (the one AI step) sits behind a button and calls
+ * the same server pipeline as /api/generate. Nothing here is cached or
+ * persisted. */
 
 interface AnnotateResponse {
   uiSpec: UISpec;
@@ -26,9 +25,9 @@ interface AnnotateResponse {
   generationMs: number;
 }
 
-/* Prefill: the README's "adding a new agent" example — a third domain on
- * purpose (neither support nor orders), so the playground opens on proof
- * of reusability rather than a fixture the app already ships. */
+/* Prefill: the README's "adding a new agent" example. A third domain on
+ * purpose (neither support nor orders), so the playground opens on a
+ * definition the app doesn't already ship. */
 const EXAMPLE: AgentDefinition = {
   system_prompt:
     "You are a release agent for the platform team. You review deployment requests and either trigger the deploy or roll back, based on the change summary and pipeline status.",
@@ -107,7 +106,7 @@ export function Playground() {
   }, [definition]);
 
   // Any edit invalidates a previous annotation result (it described an older
-  // definition) — wrap the setters so the preview can never show stale labels.
+  // definition), so wrap the setters to avoid showing stale labels.
   function edit<T>(setter: (v: T) => void) {
     return (v: T) => {
       setAnnotated(null);

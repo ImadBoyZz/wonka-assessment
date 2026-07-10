@@ -5,9 +5,9 @@ import type { AgentProvider, AgentRunRequest, AgentRunResult } from "./types";
 
 const MODEL = process.env.OPENAI_MODEL ?? "gpt-4o";
 
-/* Fallback provider. Same side-effect-free loop as the Anthropic provider,
- * with OpenAI's tool_calls (JSON-string arguments) normalized to the shared
- * result shape. */
+/* Fallback provider. Same no-side-effect loop as the Anthropic provider, with
+ * OpenAI's tool_calls (JSON-string arguments) normalized to the shared result
+ * shape. */
 
 export const openaiProvider: AgentProvider = {
   name: "openai",
@@ -55,7 +55,7 @@ export const openaiProvider: AgentProvider = {
         try {
           args = JSON.parse(call.function.arguments) as Record<string, unknown>;
         } catch {
-          // Malformed arguments surface as an empty card rather than a crash.
+          // Malformed arguments become an empty card instead of a crash.
         }
         toolCalls.push({ id: call.id, toolName: call.function.name, args });
       }

@@ -3,12 +3,9 @@
 import { At, CurrencyEur, FileText, Hash, TextT, ToggleLeft } from "@phosphor-icons/react";
 import type { FieldType } from "@/lib/types";
 
-/* ------------------------------------------------------------------ */
-/* Whitelisted field registry — the ONLY mapping from spec to widgets. */
-/* The UISpec is data, never code: no eval, no dangerouslySetInnerHTML,*/
-/* all values render as escaped React text nodes. An unknown type      */
-/* degrades to a plain text input instead of crashing.                 */
-/* ------------------------------------------------------------------ */
+/* Field registry: the mapping from spec field type to input widget. The
+ * UISpec is data, not code: no eval, no dangerouslySetInnerHTML; values render
+ * as escaped React text. An unknown type falls back to a plain text input. */
 
 export function FieldTypeIcon({ type, className }: { type: FieldType; className?: string }) {
   const cls = className ?? "size-4";
@@ -84,7 +81,7 @@ export function FieldInput({
         </select>
       );
     default:
-      // "text" and "unknown" both land here: generic input, never a crash.
+      // "text" and "unknown" both land here: a generic input.
       return (
         <input
           type="text"
@@ -100,8 +97,8 @@ export function FieldInput({
 /** Human-readable rendering of a tool-call argument value. */
 export function formatArgValue(type: FieldType, value: unknown): string {
   if (type === "currency") return `€ ${String(value)}`;
-  // Strict check: the string "false" is truthy — rendering it as "yes" would
-  // make a reviewer approve the opposite of what the model asked.
+  // The string "false" is truthy, so check explicitly; otherwise a reviewer
+  // would see "yes" for a false value.
   if (type === "boolean") return value === true || value === "true" ? "yes" : "no";
   if (typeof value === "object" && value !== null) return JSON.stringify(value);
   return String(value);

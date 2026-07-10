@@ -6,9 +6,9 @@ import type { AgentProvider, AgentRunRequest, AgentRunResult, ProviderPreference
 export type { AgentRunRequest, AgentRunResult, ProviderPreference } from "./types";
 
 /* Fallback chain: "auto" tries Anthropic first, then OpenAI. Each failure is
- * recorded as a warning so the UI can show that a fallback happened instead
- * of hiding it. The mock provider is never a silent fallback — only an
- * explicit choice: a demo result must never masquerade as a real run. */
+ * recorded as a warning and shown in the UI. The mock provider is never part
+ * of a fallback; it only runs when explicitly selected, so a demo result is
+ * never mistaken for a real run. */
 
 const CHAINS: Record<ProviderPreference, AgentProvider[]> = {
   auto: [anthropicProvider, openaiProvider],
